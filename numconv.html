@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Number Converter</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <h1>Number Converter</h1>
+    <p>This page converts numbers between decimal, binary, hexadecimal, and octal.</p>
+    <form>
+      <label for="decimal">Decimal:</label>
+      <input type="number" id="decimal" name="decimal" min="0">
+      <br>
+      <label for="binary">Binary:</label>
+      <input type="text" id="binary" name="binary" pattern="[01]+">
+      <br>
+      <label for="hexadecimal">Hexadecimal:</label>
+      <input type="text" id="hexadecimal" name="hexadecimal" pattern="[0-9a-fA-F]+">
+      <br>
+      <label for="octal">Octal:</label>
+      <input type="text" id="octal" name="octal" pattern="[0-7]+">
+      <br>
+      <button type="button" id="clear">CLEAR</button>
+    </form>
+  </body>
+</html>
+
+
+<script>
+    const decimalInput = document.getElementById('decimal');
+const binaryInput = document.getElementById('binary');
+const hexadecimalInput = document.getElementById('hexadecimal');
+const octalInput = document.getElementById('octal');
+const clearButton = document.getElementById('clear');
+
+clearButton.addEventListener('click', function() {
+  decimalInput.value = '';
+  binaryInput.value = '';
+  hexadecimalInput.value = '';
+  octalInput.value = '';
+});
+
+decimalInput.addEventListener('input', function() {
+  const decimalValue = parseInt(this.value);
+  if (!isNaN(decimalValue)) {
+    binaryInput.value = decimalValue.toString(2);
+    hexadecimalInput.value = decimalValue.toString(16).toUpperCase();
+    octalInput.value = decimalValue.toString(8);
+  } else {
+    binaryInput.value = 'Invalid Number';
+    hexadecimalInput.value = 'Invalid Number';
+    octalInput.value = 'Invalid Number';
+  }
+});
+
+binaryInput.addEventListener('input', function() {
+  const binaryValue = this.value;
+  if (/^[01]+$/.test(binaryValue)) {
+    decimalInput.value = parseInt(binaryValue, 2);
+    hexadecimalInput.value = parseInt(binaryValue, 2).toString(16).toUpperCase();
+    octalInput.value = parseInt(binaryValue, 2).toString(8);
+  } else {
+    decimalInput.value = 'Invalid Number';
+    hexadecimalInput.value = 'Invalid Number';
+    octalInput.value = 'Invalid Number';
+  }
+});
+
+hexadecimalInput.addEventListener('input', function() {
+  const hexadecimalValue = this.value.toUpperCase();
+  if (/^[0-9A-F]+$/.test(hexadecimalValue)) {
+    decimalInput.value = parseInt(hexadecimalValue, 16);
+    binaryInput.value = parseInt(hexadecimalValue, 16).toString(2);
+    octalInput.value = parseInt(hexadecimalValue, 16).toString(8);
+  } else {
+    decimalInput.value = 'Invalid Number';
+    binaryInput.value = 'Invalid Number';
+    octalInput.value = 'Invalid Number';
+  }
+});
+
+octalInput.addEventListener('input', function() {
+  const octalValue = this.value;
+  if (/^[0-7]+$/.test(octalValue)) {
+    decimalInput.value = parseInt(octalValue, 8);
+    binaryInput.value = parseInt(octalValue, 8).toString(2);
+    hexadecimalInput.value = parseInt(octalValue, 8).toString(16).toUpperCase();
+  } else {
+    decimalInput.value = 'Invalid Number';
+    binaryInput.value = 'Invalid Number';
+    hexadecimalInput.value = 'Invalid Number';
+  }
+});
+
+</script>
