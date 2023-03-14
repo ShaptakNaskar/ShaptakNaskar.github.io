@@ -35,10 +35,17 @@
       <input type="text" id="octal" name="octal" pattern="[0-7]+">
       <br>
       <button type="button" id="clear">CLEAR</button>
-      <button onclick="darkmode()">Toggle dark mode</button>
     </form>
+    <button onclick="darkmode()">Toggle dark mode</button>
+    <script>
+      function darkmode() {
+         var element = document.body;
+         element.classList.toggle("dark-mode");
+      }
+    </script>
   </body>
 </html>
+
 
 
 <script>
@@ -108,9 +115,4 @@ octalInput.addEventListener('input', function() {
 });
 
 </script>
-  <script>
-		function darkmode() {
-		   var element = document.body;
-		   element.classList.toggle("dark-mode");
-		}
-</script>
+ 
