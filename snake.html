@@ -6,26 +6,33 @@
 
 		<meta charset="utf-8" />
 
-		<title>Mono Saap</title>
+		<title>Snake CSS</title>
 
-		<link href='http://fonts.googleapis.com/css?family=Cabin+Sketch:bold' rel='stylesheet' type='text/css'>
+		<link href='http://fonts.googleapis.com/css?family=Open+Sans:bold' rel='stylesheet' type='text/css'>
 
 		<style type="text/css">
 
 			body {
-				background:#9c9;
+				background:rgb(255, 255, 255);
 				text-align:center;
 			}
 
 			canvas {
-				background:#9c9;
+				background:rgb(255, 255, 255);
 				-webkit-box-shadow:0 0 20px #000;
 				-moz-box-shadow: 0 0 20px #000;
 				box-shadow:0 0 20px #000;
 			}
 
-			h1 { font-family: 'Cabin Sketch', arial, serif; font-size:50px;
-				 text-indent: -100px;margin-bottom:20;margin-top:72px}
+			h1 {
+  font-family: 'Open Sans', arial, serif;
+  font-size: 50px;
+  text-align: center; /* add this line */
+  margin-bottom: 20;
+  margin-top: 72px;
+  text-indent: -100px;
+}
+
 
 
 		</style>
@@ -34,13 +41,7 @@
 
 		<script type="text/javascript">
 
-			/**
-			 * @license HTML5 experiment Snake
-			 * http://www.xarg.org/project/html5-snake/
-			 *
-			 * Copyright (c) 2011, Robert Eisele (robert@xarg.org)
-			 * Dual licensed under the MIT or GPL Version 2 licenses.
-			 **/
+			
 			function init() {
 
 				var ctx;
@@ -177,12 +178,7 @@
 
 					var code = e.keyCode - 37;
 
-					/*
-					 * 0: left
-					 * 1: up
-					 * 2: right
-					 * 3: down
-					 **/
+					
 					if (0 <= code && code < 4 && code !== turn[0]) {
 						turn.unshift(code);
 					} else if (-5 == code) {
