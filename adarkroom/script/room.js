@@ -24,7 +24,7 @@ var Room = {
 					'wood': 10 + (n * 10)
 				};
 			},
-			audio: audioLibrary.BUILD_TRAP
+			audio: AudioLibrary.BUILD_TRAP
 		},
 		'cart': {
 			name: _('cart'),
@@ -38,7 +38,7 @@ var Room = {
 					'wood': 30
 				};
 			},
-			audio: audioLibrary.BUILD_CART
+			audio: AudioLibrary.BUILD_CART
 		},
 		'hut': {
 			name: _('hut'),
@@ -54,7 +54,7 @@ var Room = {
 					'wood': 100 + (n * 50)
 				};
 			},
-			audio: audioLibrary.BUILD_HUT
+			audio: AudioLibrary.BUILD_HUT
 		},
 		'lodge': {
 			name: _('lodge'),
@@ -70,7 +70,7 @@ var Room = {
 					meat: 5
 				};
 			},
-			audio: audioLibrary.BUILD_LODGE
+			audio: AudioLibrary.BUILD_LODGE
 		},
 		'trading post': {
 			name: _('trading post'),
@@ -85,7 +85,7 @@ var Room = {
 					'fur': 100
 				};
 			},
-			audio: audioLibrary.BUILD_TRADING_POST
+			audio: AudioLibrary.BUILD_TRADING_POST
 		},
 		'tannery': {
 			name: _('tannery'),
@@ -100,7 +100,7 @@ var Room = {
 					'fur': 50
 				};
 			},
-			audio: audioLibrary.BUILD_TANNERY
+			audio: AudioLibrary.BUILD_TANNERY
 		},
 		'smokehouse': {
 			name: _('smokehouse'),
@@ -115,7 +115,7 @@ var Room = {
 					'meat': 50
 				};
 			},
-			audio: audioLibrary.BUILD_SMOKEHOUSE
+			audio: AudioLibrary.BUILD_SMOKEHOUSE
 		},
 		'workshop': {
 			name: _('workshop'),
@@ -131,7 +131,7 @@ var Room = {
 					'scales': 10
 				};
 			},
-			audio: audioLibrary.BUILD_WORKSHOP
+			audio: AudioLibrary.BUILD_WORKSHOP
 		},
 		'steelworks': {
 			name: _('steelworks'),
@@ -147,7 +147,7 @@ var Room = {
 					'coal': 100
 				};
 			},
-			audio: audioLibrary.BUILD_STEELWORKS
+			audio: AudioLibrary.BUILD_STEELWORKS
 		},
 		'armoury': {
 			name: _('armoury'),
@@ -163,7 +163,7 @@ var Room = {
 					'sulphur': 50
 				};
 			},
-			audio: audioLibrary.BUILD_ARMOURY
+			audio: AudioLibrary.BUILD_ARMOURY
 		},
 		'torch': {
 			name: _('torch'),
@@ -176,7 +176,7 @@ var Room = {
 					'cloth': 1
 				};
 			},
-			audio: audioLibrary.CRAFT_TORCH
+			audio: AudioLibrary.CRAFT_TORCH
 		},
 		'waterskin': {
 			name: _('waterskin'),
@@ -189,7 +189,7 @@ var Room = {
 					'leather': 50
 				};
 			},
-			audio: audioLibrary.CRAFT_WATERSKIN
+			audio: AudioLibrary.CRAFT_WATERSKIN
 		},
 		'cask': {
 			name: _('cask'),
@@ -203,7 +203,7 @@ var Room = {
 					'iron': 20
 				};
 			},
-			audio: audioLibrary.CRAFT_CASK
+			audio: AudioLibrary.CRAFT_CASK
 		},
 		'water tank': {
 			name: _('water tank'),
@@ -217,7 +217,7 @@ var Room = {
 					'steel': 50
 				};
 			},
-			audio: audioLibrary.CRAFT_WATER_TANK
+			audio: AudioLibrary.CRAFT_WATER_TANK
 		},
 		'bone spear': {
 			name: _('bone spear'),
@@ -230,7 +230,7 @@ var Room = {
 					'teeth': 5
 				};
 			},
-			audio: audioLibrary.CRAFT_BONE_SPEAR
+			audio: AudioLibrary.CRAFT_BONE_SPEAR
 		},
 		'rucksack': {
 			name: _('rucksack'),
@@ -243,7 +243,7 @@ var Room = {
 					'leather': 200
 				};
 			},
-			audio: audioLibrary.CRAFT_RUCKSACK
+			audio: AudioLibrary.CRAFT_RUCKSACK
 		},
 		'wagon': {
 			name: _('wagon'),
@@ -257,7 +257,7 @@ var Room = {
 					'iron': 100
 				};
 			},
-			audio: audioLibrary.CRAFT_WAGON
+			audio: AudioLibrary.CRAFT_WAGON
 		},
 		'convoy': {
 			name: _('convoy'),
@@ -272,7 +272,7 @@ var Room = {
 					'steel': 100
 				};
 			},
-			audio: audioLibrary.CRAFT_CONVOY
+			audio: AudioLibrary.CRAFT_CONVOY
 		},
 		'l armour': {
 			name: _('l armour'),
@@ -285,7 +285,7 @@ var Room = {
 					'scales': 20
 				};
 			},
-			audio: audioLibrary.CRAFT_LEATHER_ARMOUR
+			audio: AudioLibrary.CRAFT_LEATHER_ARMOUR
 		},
 		'i armour': {
 			name: _('i armour'),
@@ -298,7 +298,7 @@ var Room = {
 					'iron': 100
 				};
 			},
-			audio: audioLibrary.CRAFT_IRON_ARMOUR
+			audio: AudioLibrary.CRAFT_IRON_ARMOUR
 		},
 		's armour': {
 			name: _('s armour'),
@@ -311,7 +311,7 @@ var Room = {
 					'steel': 100
 				};
 			},
-			audio: audioLibrary.CRAFT_STEEL_ARMOUR
+			audio: AudioLibrary.CRAFT_STEEL_ARMOUR
 		},
 		'iron sword': {
 			name: _('iron sword'),
@@ -325,7 +325,7 @@ var Room = {
 					'iron': 20
 				};
 			},
-			audio: audioLibrary.CRAFT_IRON_SWORD
+			audio: AudioLibrary.CRAFT_IRON_SWORD
 		},
 		'steel sword': {
 			name: _('steel sword'),
@@ -339,7 +339,7 @@ var Room = {
 					'steel': 20
 				};
 			},
-			audio: audioLibrary.CRAFT_STEEL_SWORD
+			audio: AudioLibrary.CRAFT_STEEL_SWORD
 		},
 		'rifle': {
 			name: _('rifle'),
@@ -352,7 +352,7 @@ var Room = {
 					'sulphur': 50
 				};
 			},
-			audio: audioLibrary.CRAFT_RIFLE
+			audio: AudioLibrary.CRAFT_RIFLE
 		}
 	},
 
@@ -362,14 +362,14 @@ var Room = {
 			cost: function () {
 				return { fur: 150 };
 			},
-			audio: audioLibrary.BUY_SCALES
+			audio: AudioLibrary.BUY_SCALES
 		},
 		'teeth': {
 			type: 'good',
 			cost: function () {
 				return { fur: 300 };
 			},
-			audio: audioLibrary.BUY_TEETH
+			audio: AudioLibrary.BUY_TEETH
 		},
 		'iron': {
 			type: 'good',
@@ -379,7 +379,7 @@ var Room = {
 					'scales': 50
 				};
 			},
-			audio: audioLibrary.BUY_IRON
+			audio: AudioLibrary.BUY_IRON
 		},
 		'coal': {
 			type: 'good',
@@ -389,7 +389,7 @@ var Room = {
 					'teeth': 50
 				};
 			},
-			audio: audioLibrary.BUY_COAL
+			audio: AudioLibrary.BUY_COAL
 		},
 		'steel': {
 			type: 'good',
@@ -400,7 +400,7 @@ var Room = {
 					'teeth': 50
 				};
 			},
-			audio: audioLibrary.BUY_STEEL
+			audio: AudioLibrary.BUY_STEEL
 		},
 		'medicine': {
 			type: 'good',
@@ -409,7 +409,7 @@ var Room = {
 					'scales': 50, 'teeth': 30
 				};
 			},
-			audio: audioLibrary.BUY_MEDICINE
+			audio: AudioLibrary.BUY_MEDICINE
 		},
 		'bullets': {
 			type: 'good',
@@ -418,7 +418,7 @@ var Room = {
 					'scales': 10
 				};
 			},
-			audio: audioLibrary.BUY_BULLETS
+			audio: AudioLibrary.BUY_BULLETS
 		},
 		'energy cell': {
 			type: 'good',
@@ -428,7 +428,7 @@ var Room = {
 					'teeth': 10
 				};
 			},
-			audio: audioLibrary.BUY_ENERGY_CELL
+			audio: AudioLibrary.BUY_ENERGY_CELL
 		},
 		'bolas': {
 			type: 'weapon',
@@ -437,7 +437,7 @@ var Room = {
 					'teeth': 10
 				};
 			},
-			audio: audioLibrary.BUY_BOLAS
+			audio: AudioLibrary.BUY_BOLAS
 		},
 		'grenade': {
 			type: 'weapon',
@@ -447,7 +447,7 @@ var Room = {
 					'teeth': 50
 				};
 			},
-			audio: audioLibrary.BUY_GRENADES
+			audio: AudioLibrary.BUY_GRENADES
 		},
 		'bayonet': {
 			type: 'weapon',
@@ -457,7 +457,7 @@ var Room = {
 					'teeth': 250
 				};
 			},
-			audio: audioLibrary.BUY_BAYONET
+			audio: AudioLibrary.BUY_BAYONET
 		},
 		'alien alloy': {
 			type: 'good',
@@ -468,7 +468,7 @@ var Room = {
 					'teeth': 300
 				};
 			},
-			audio: audioLibrary.BUY_ALIEN_ALLOY
+			audio: AudioLibrary.BUY_ALIEN_ALLOY
 		},
 		'compass': {
 			type: 'special',
@@ -480,7 +480,7 @@ var Room = {
 					teeth: 10
 				};
 			},
-			audio: audioLibrary.BUY_COMPASS
+			audio: AudioLibrary.BUY_COMPASS
 		}
 	},
 
@@ -683,7 +683,7 @@ var Room = {
 			$SM.set('stores.wood', wood - 5);
 		}
 		$SM.set('game.fire', Room.FireEnum.Burning);
-		audioEngine.playSound(audioLibrary.LIGHT_FIRE);
+		AudioEngine.playSound(AudioLibrary.LIGHT_FIRE);
 		Room.onFireChange();
 	},
 
@@ -700,7 +700,7 @@ var Room = {
 		if ($SM.get('game.fire.value') < 4) {
 			$SM.set('game.fire', Room.FireEnum.fromInt($SM.get('game.fire.value') + 1));
 		}
-		audioEngine.playSound(audioLibrary.STOKE_FIRE);
+		AudioEngine.playSound(AudioLibrary.STOKE_FIRE);
 		Room.onFireChange();
 	},
 
@@ -993,7 +993,7 @@ var Room = {
 		$SM.add('stores["' + thing + '"]', 1);
 
 		// audio
-		audioEngine.playSound(audioLibrary.BUY);
+		AudioEngine.playSound(AudioLibrary.BUY);
 	},
 
 	build: function (buildBtn) {
@@ -1054,10 +1054,10 @@ var Room = {
 			case 'weapon':
 			case 'upgrade':
 			case 'tool':
-				audioEngine.playSound(audioLibrary.CRAFT);
+				AudioEngine.playSound(AudioLibrary.CRAFT);
 				break;
 			case 'building':
-				audioEngine.playSound(audioLibrary.BUILD);
+				AudioEngine.playSound(AudioLibrary.BUILD);
 				break;
 		}
 	},
@@ -1236,19 +1236,19 @@ var Room = {
 		var fireValue = $SM.get('game.fire.value');
 		switch (fireValue) {
 			case 0:
-				audioEngine.playBackgroundMusic(audioLibrary.MUSIC_FIRE_DEAD);
+				AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_FIRE_DEAD);
 				break;
 			case 1:
-				audioEngine.playBackgroundMusic(audioLibrary.MUSIC_FIRE_SMOLDERING);
+				AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_FIRE_SMOLDERING);
 				break;
 			case 2:
-				audioEngine.playBackgroundMusic(audioLibrary.MUSIC_FIRE_FLICKERING);
+				AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_FIRE_FLICKERING);
 				break;
 			case 3:
-				audioEngine.playBackgroundMusic(audioLibrary.MUSIC_FIRE_BURNING);
+				AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_FIRE_BURNING);
 				break;
 			case 4:
-				audioEngine.playBackgroundMusic(audioLibrary.MUSIC_FIRE_ROARING);
+				AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_FIRE_ROARING);
 				break;
 		}
 	}

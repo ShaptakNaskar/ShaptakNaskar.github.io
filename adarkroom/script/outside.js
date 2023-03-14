@@ -591,17 +591,17 @@ var Outside = {
 		// set music
 		var numberOfHuts = $SM.get('game.buildings["hut"]', true);
 		if(numberOfHuts === 0) {
-			audioEngine.playBackgroundMusic(audioLibrary.MUSIC_SILENT_FOREST);
+			AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_SILENT_FOREST);
 		} else if(numberOfHuts == 1) {
-			audioEngine.playBackgroundMusic(audioLibrary.MUSIC_LONELY_HUT);
+			AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_LONELY_HUT);
 		} else if(numberOfHuts <= 4) {
-			audioEngine.playBackgroundMusic(audioLibrary.MUSIC_TINY_VILLAGE);
+			AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_TINY_VILLAGE);
 		} else if(numberOfHuts <= 8) {
-			audioEngine.playBackgroundMusic(audioLibrary.MUSIC_MODEST_VILLAGE);
+			AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_MODEST_VILLAGE);
 		} else if(numberOfHuts <= 14) {
-			audioEngine.playBackgroundMusic(audioLibrary.MUSIC_LARGE_VILLAGE);
+			AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_LARGE_VILLAGE);
 		} else {
-			audioEngine.playBackgroundMusic(audioLibrary.MUSIC_RAUCOUS_VILLAGE);
+			AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_RAUCOUS_VILLAGE);
 		}
 	},
 	
@@ -609,7 +609,7 @@ var Outside = {
 		Notifications.notify(Outside, _("dry brush and dead branches litter the forest floor"));
 		var gatherAmt = $SM.get('game.buildings["cart"]', true) > 0 ? 50 : 10;
 		$SM.add('stores.wood', gatherAmt);
-		audioEngine.playSound(audioLibrary.GATHER_WOOD);
+		AudioEngine.playSound(AudioLibrary.GATHER_WOOD);
 	},
 	
 	checkTraps: function() {
@@ -650,7 +650,7 @@ var Outside = {
 		
 		Notifications.notify(Outside, s);
 		$SM.addM('stores', drops);
-		audioEngine.playSound(audioLibrary.CHECK_TRAPS);
+		AudioEngine.playSound(AudioLibrary.CHECK_TRAPS);
 	},
 	
 	handleStateUpdates: function(e){

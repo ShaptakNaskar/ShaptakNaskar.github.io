@@ -349,7 +349,7 @@ var World = {
 
 		// play random footstep
 		var randomFootstep = Math.floor(Math.random() * 5) + 1;
-		audioEngine.playSound(audioLibrary['FOOTSTEPS_' + randomFootstep]);
+		AudioEngine.playSound(AudioLibrary['FOOTSTEPS_' + randomFootstep]);
 
 		if(World.checkDanger()) {
 			if(World.danger) {
@@ -538,7 +538,7 @@ var World = {
 		} else if(typeof World.LANDMARKS[curTile] != 'undefined') {
 			if(curTile != World.TILE.OUTPOST || !World.outpostUsed()) {
 				Events.startEvent(Events.Setpieces[World.LANDMARKS[curTile].scene]);
-				audioEngine.playEventMusic(Events.Setpieces[World.LANDMARKS[curTile].scene].audio);
+				AudioEngine.playEventMusic(Events.Setpieces[World.LANDMARKS[curTile].scene].audio);
 			}
 		} else {
 			if(World.useSupplies()) {
@@ -888,7 +888,7 @@ var World = {
 			World.state = null;
 			Path.outfit = {};
 			$SM.remove('outfit');
-			audioEngine.playSound(audioLibrary.DEATH);
+			AudioEngine.playSound(AudioLibrary.DEATH);
 			$('#outerSlider').animate({opacity: '0'}, 600, 'linear', function() {
 				$('#outerSlider').css('left', '0px');
 				$('#locationSlider').css('left', '0px');
@@ -1012,7 +1012,7 @@ var World = {
 		World.curPos = World.copyPos(World.VILLAGE_POS);
 		World.drawMap();
 		World.setTitle();
-		audioEngine.playBackgroundMusic(audioLibrary.MUSIC_WORLD);
+		AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_WORLD);
 		World.dead = false;
 		$('div#bagspace-world > div').empty();
 		World.updateSupplies();
