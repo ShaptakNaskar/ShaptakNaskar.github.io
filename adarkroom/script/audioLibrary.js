@@ -1,7 +1,7 @@
 /**
  * Module that defines all /audio files
  */
-var /audioLibrary = {
+var audioLibrary = {
     MUSIC_DUSTY_PATH: '/audio/dusty-path.flac',
     MUSIC_SILENT_FOREST: '/audio/silent-forest.flac',
     MUSIC_LONELY_HUT: '/audio/lonely-hut.flac',

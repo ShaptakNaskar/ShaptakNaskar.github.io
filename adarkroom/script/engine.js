@@ -105,11 +105,11 @@
 			}
 
 			// start loading music and events early
-			for (var key in AudioLibrary) {
+			for (var key in audioLibrary) {
 				if (
 					key.toString().indexOf('MUSIC_') > -1 ||
 					key.toString().indexOf('EVENT_') > -1) {
-						AudioEngine.loadAudioFile(AudioLibrary[key]);
+						audioEngine.loadaudioFile(audioLibrary[key]);
 					}
 			}
 
@@ -215,7 +215,7 @@
 			$.Dispatch('stateUpdate').subscribe(Engine.handleStateUpdates);
 
 			$SM.init();
-			AudioEngine.init();
+			audioEngine.init();
 			Notifications.init();
 			Events.init();
 			Room.init();
@@ -240,8 +240,8 @@
 			}
 
 			Engine.toggleVolume(Boolean($SM.get('config.soundOn')));
-			if(!AudioEngine.isAudioContextRunning()){
-				document.addEventListener('click', Engine.resumeAudioContext, true);
+			if(!audioEngine.isaudioContextRunning()){
+				document.addEventListener('click', Engine.resumeaudioContext, true);
 			}
 			
 			Engine.saveLanguage();
@@ -250,13 +250,13 @@
       setTimeout(notifyAboutSound, 3000);
 
 		},
-		resumeAudioContext: function () {
-			AudioEngine.tryResumingAudioContext();
+		resumeaudioContext: function () {
+			audioEngine.tryResumingaudioContext();
 			
 			// turn on music!
-      		AudioEngine.setMasterVolume($SM.get('config.soundOn') ? 1.0 : 0.0, 0);
+      		audioEngine.setMasterVolume($SM.get('config.soundOn') ? 1.0 : 0.0, 0);
 
-			document.removeEventListener('click', Engine.resumeAudioContext);
+			document.removeEventListener('click', Engine.resumeaudioContext);
 		},
 		browserValid: function() {
 			return ( location.search.indexOf( 'ignorebrowser=true' ) >= 0 || ( typeof Storage != 'undefined' && !oldIE ) );
@@ -819,11 +819,11 @@
 			if (!enabled) {
 				$('.volume').text(_('sound on.'));
 				$SM.set('config.soundOn', false);
-				AudioEngine.setMasterVolume(0.0);
+				audioEngine.setMasterVolume(0.0);
 			} else {
 				$('.volume').text(_('sound off.'));
 				$SM.set('config.soundOn', true);
-				AudioEngine.setMasterVolume(1.0);
+				audioEngine.setMasterVolume(1.0);
 			}
 		},
 

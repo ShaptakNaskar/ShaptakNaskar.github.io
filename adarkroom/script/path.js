@@ -304,7 +304,7 @@ var Path = {
 		Path.updateOutfitting();
 		Path.updatePerks(true);
 		
-		AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_DUSTY_PATH);
+		audioEngine.playBackgroundMusic(audioLibrary.MUSIC_DUSTY_PATH);
 
 		Engine.moveStoresView($('#perks'), transition_diff);
 	},
@@ -320,7 +320,7 @@ var Path = {
 		World.onArrival();
 		$('#outerSlider').animate({left: '-700px'}, 300);
 		Engine.activeModule = World;
-		AudioEngine.playSound(AudioLibrary.EMBARK);
+		audioEngine.playSound(audioLibrary.EMBARK);
 	},
 	
 	handleStateUpdates: function(e){

@@ -340,12 +340,12 @@ var Events = {
 
 	eatMeat: function(btn) {
 		Events.doHeal('cured meat', World.meatHeal(), btn);
-		AudioEngine.playSound(AudioLibrary.EAT_MEAT);
+		audioEngine.playSound(audioLibrary.EAT_MEAT);
 	},
 
 	useMeds: function(btn) {
 		Events.doHeal('medicine', World.medsHeal(), btn);
-		AudioEngine.playSound(AudioLibrary.USE_MEDS);
+		audioEngine.playSound(audioLibrary.USE_MEDS);
 	},
 
 	useWeapon: function(btn) {
@@ -425,13 +425,13 @@ var Events = {
 			var r = Math.floor(Math.random() * 2) + 1;
 			switch (weapon.type) {
 				case 'unarmed':
-					AudioEngine.playSound(AudioLibrary['WEAPON_UNARMED_' + r]);
+					audioEngine.playSound(audioLibrary['WEAPON_UNARMED_' + r]);
 					break;
 				case 'melee':
-					AudioEngine.playSound(AudioLibrary['WEAPON_MELEE_' + r]);
+					audioEngine.playSound(audioLibrary['WEAPON_MELEE_' + r]);
 					break;
 				case 'ranged':
-					AudioEngine.playSound(AudioLibrary['WEAPON_RANGED_' + r]);
+					audioEngine.playSound(audioLibrary['WEAPON_RANGED_' + r]);
 					break;
 			}
 
@@ -465,13 +465,13 @@ var Events = {
 				var r = Math.floor(Math.random() * 2) + 1;
 				switch (type) {
 					case 'unarmed':
-						AudioEngine.playSound(AudioLibrary['WEAPON_UNARMED_' + r]);
+						audioEngine.playSound(audioLibrary['WEAPON_UNARMED_' + r]);
 						break;
 					case 'melee':
-						AudioEngine.playSound(AudioLibrary['WEAPON_MELEE_' + r]);
+						audioEngine.playSound(audioLibrary['WEAPON_MELEE_' + r]);
 						break;
 					case 'ranged':
-						AudioEngine.playSound(AudioLibrary['WEAPON_RANGED_' + r]);
+						audioEngine.playSound(audioLibrary['WEAPON_RANGED_' + r]);
 						break;
 				}
 			}
@@ -550,7 +550,7 @@ var Events = {
 						clearTimeout(Events._enemyAttackTimer);
 						Events.endEvent();
 						World.die();
-						AudioEngine.playSound(AudioLibrary.LOSE_FIGHT);
+						audioEngine.playSound(audioLibrary.LOSE_FIGHT);
 					}
 			});
 		}
@@ -568,7 +568,7 @@ var Events = {
 				return;
 			}
 			Events.endFight();
-			// AudioEngine.playSound(AudioLibrary.WIN_FIGHT);
+			// audioEngine.playSound(audioLibrary.WIN_FIGHT);
 			$('#enemy').animate({opacity: 0}, 300, 'linear', function() {
 				Engine.setTimeout(function() {
 					var scene = Events.activeEvent().scenes[Events.activeScene];
@@ -1059,7 +1059,7 @@ var Events = {
 			} else {
 				var r = Math.floor(Math.random()*(possibleEvents.length));
 				Events.startEvent(possibleEvents[r]);
-				AudioEngine.playEventMusic(possibleEvents[r].audio);
+				audioEngine.playEventMusic(possibleEvents[r].audio);
 			}
 		}
 
@@ -1082,13 +1082,13 @@ var Events = {
 		if (possibleFights.length > 0) {
 			if (World.getDistance() > 20) {
 				// Tier 3
-				AudioEngine.playEventMusic(AudioLibrary.ENCOUNTER_TIER_3);
+				audioEngine.playEventMusic(audioLibrary.ENCOUNTER_TIER_3);
 			} else if (World.getDistance() > 10) {
 				// Tier 2
-				AudioEngine.playEventMusic(AudioLibrary.ENCOUNTER_TIER_2);
+				audioEngine.playEventMusic(audioLibrary.ENCOUNTER_TIER_2);
 			} else {
 				// Tier 1
-				AudioEngine.playEventMusic(AudioLibrary.ENCOUNTER_TIER_1);
+				audioEngine.playEventMusic(audioLibrary.ENCOUNTER_TIER_1);
 			}
 		}
 	},
@@ -1136,7 +1136,7 @@ var Events = {
 	},
 
 	endEvent: function() {
-		AudioEngine.stopEventMusic();
+		audioEngine.stopEventMusic();
 		Events.eventPanel().animate({opacity:0}, Events._PANEL_FADE, 'linear', function() {
 			Events.eventPanel().remove();
 			Events.activeEvent().eventPanel = null;

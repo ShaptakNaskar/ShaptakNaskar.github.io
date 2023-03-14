@@ -53,7 +53,7 @@ var Space = {
 		Space.hull = Ship.getMaxHull();
 		Space.altitude = 0;
 		Space.setTitle();
-		AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_SPACE);
+		audioEngine.playBackgroundMusic(audioLibrary.MUSIC_SPACE);
 		Space.updateHull();
 		
 		Space.up = 
@@ -68,7 +68,7 @@ var Space = {
 		Space.startAscent();
 		Space._shipTimer = setInterval(Space.moveShip, 33);
 		Space._volumeTimer = setInterval(Space.lowerVolume, 1000);
-		AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_SPACE);
+		audioEngine.playBackgroundMusic(audioLibrary.MUSIC_SPACE);
 	},
 	
 	setTitle: function() {
@@ -144,13 +144,13 @@ var Space = {
 						var r = Math.floor(Math.random() * 2);
 						if(Space.altitude > 40) {
 							r += 6;
-							AudioEngine.playSound(AudioLibrary['ASTEROID_HIT_' + r]);
+							audioEngine.playSound(audioLibrary['ASTEROID_HIT_' + r]);
 						} else if(Space.altitude > 20) {
 							r += 4;
-							AudioEngine.playSound(AudioLibrary['ASTEROID_HIT_' + r]);
+							audioEngine.playSound(audioLibrary['ASTEROID_HIT_' + r]);
 						} else  {
 							r += 1;
-							AudioEngine.playSound(AudioLibrary['ASTEROID_HIT_' + r]);
+							audioEngine.playSound(audioLibrary['ASTEROID_HIT_' + r]);
 						}
 
 						if(Space.hull === 0) {
@@ -376,7 +376,7 @@ var Space = {
 		Ship.onArrival();
 		Button.cooldown($('#liftoffButton'));
 		Engine.event('progress', 'crash');
-		AudioEngine.playSound(AudioLibrary.CRASH);
+		audioEngine.playSound(audioLibrary.CRASH);
 	},
 	
 	endGame: function() {
@@ -400,7 +400,7 @@ var Space = {
 		}
 		delete Outside._popTimeout;
 		
-		AudioEngine.playBackgroundMusic(AudioLibrary.MUSIC_ENDING);
+		audioEngine.playBackgroundMusic(audioLibrary.MUSIC_ENDING);
 
 		$('#hullRemaining', Space.panel).animate({opacity: 0}, 500, 'linear');
 		Space.ship.animate({
@@ -562,6 +562,6 @@ var Space = {
 		// lower audio as ship gets further into space
 		var progress = Space.altitude / 60;
 		var newVolume = 1.0 - progress;
-		AudioEngine.setBackgroundMusicVolume(newVolume, 0.3);
+		audioEngine.setBackgroundMusicVolume(newVolume, 0.3);
 	}
 };
