@@ -42,6 +42,21 @@ a:active {
 <body>
 	<h1>Sappy's Tool&Game Box</h1>
 	<h2>This website is a WIP project by Sappy. New tools and simple web games will be added as time permits.</h2>
+<div style="text-align: left;">
+	<h3>Current Time: <span id="current-time"></span></h3>
+	<h3>Current Date: <span id="current-date"></span></h3>
+</div>
+
+<script>
+	function updateTime() {
+		var today = new Date();
+		var time = today.toLocaleTimeString();
+		var date = today.toLocaleDateString();
+		document.getElementById("current-time").innerHTML = time;
+		document.getElementById("current-date").innerHTML = date;
+	}
+	setInterval(updateTime, 1000);
+</script>
 	<h3>Tools available</h3>
 	<ul>
 		<li><a href="numconv.html">Number Conversion</a></li>
