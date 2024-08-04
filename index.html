@@ -45,11 +45,11 @@ a:active {
 <div style="text-align: left;">
 	<h3>Current Time: <span id="current-time"></span></h3>
 	<h3>Current Date: <span id="current-date"></span></h3>
-	<h3>Current Weather: <span id="current-weather"></span></h3>
+	<h3><span id="current-weather"></span></h3>
 </div>
 
 <script>
-	function updateTime() {
+		function updateTime() {
     var today = new Date();
     var time = today.toLocaleTimeString();
     var date = today.toLocaleDateString();
@@ -58,15 +58,17 @@ a:active {
 }
 
 function fetchWeather(lat, lon) {
-    var apiKey = '1890dd1259ef7fde34de7e77ccd8728f';
+    var apiKey = '1890dd1259ef7fde34de7e77ccd8728f'; // Replace with your OpenWeather API key
     var url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
     fetch(url)
         .then(response => response.json())
         .then(data => {
+            var location = data.name;
             var weatherDescription = data.weather[0].description;
             var temperature = data.main.temp;
-            document.getElementById("current-weather").innerHTML = `${weatherDescription}, ${temperature}°C`;
+            var rainProbability = data.rain ? (data.rain['1h'] || data.rain['3h'] || 0) : 0;
+            document.getElementById("current-weather").innerHTML = `Current Weather at your location(${location}): ${temperature}°C with rain probability of ${rainProbability}%`;
         })
         .catch(error => {
             console.error('Error fetching weather data:', error);
@@ -91,7 +93,6 @@ function getLocation() {
 
 setInterval(updateTime, 1000);
 getLocation();
-
 </script>
 	<h3>Tools available</h3>
 	<ul>
