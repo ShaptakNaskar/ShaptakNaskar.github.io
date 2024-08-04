@@ -46,6 +46,7 @@ a:active {
 	<h3>Current Time: <span id="current-time"></span></h3>
 	<h3>Current Date: <span id="current-date"></span></h3>
 	<h3><span id="current-weather"></span></h3>
+	<h3>Current Browser: <span id="current-browser"></span></h3>
 </div>
 
 <script>
@@ -93,6 +94,50 @@ function getLocation() {
 
 setInterval(updateTime, 1000);
 getLocation();
+	function getBrowserInfo() {
+    var userAgent = navigator.userAgent;
+    var browserName = navigator.appName;
+    var browserVersion = '' + parseFloat(navigator.appVersion);
+    var osName = 'Unknown OS';
+
+    if (userAgent.indexOf("Win") != -1) osName = "Windows";
+    if (userAgent.indexOf("Mac") != -1) osName = "Macintosh";
+    if (userAgent.indexOf("Linux") != -1) osName = "Linux";
+    if (userAgent.indexOf("Android") != -1) osName = "Android";
+    if (userAgent.indexOf("like Mac") != -1) osName = "iOS";
+
+    if ((offset = userAgent.indexOf("Opera")) != -1) {
+        browserName = "Opera";
+        browserVersion = userAgent.substring(offset + 6);
+        if ((offset = userAgent.indexOf("Version")) != -1)
+            browserVersion = userAgent.substring(offset + 8);
+    } else if ((offset = userAgent.indexOf("MSIE")) != -1) {
+        browserName = "Internet Explorer";
+        browserVersion = userAgent.substring(offset + 5);
+    } else if ((offset = userAgent.indexOf("Chrome")) != -1) {
+        browserName = "Chrome";
+        browserVersion = userAgent.substring(offset + 7);
+    } else if ((offset = userAgent.indexOf("Safari")) != -1) {
+        browserName = "Safari";
+        browserVersion = userAgent.substring(offset + 7);
+        if ((offset = userAgent.indexOf("Version")) != -1)
+            browserVersion = userAgent.substring(offset + 8);
+    } else if ((offset = userAgent.indexOf("Firefox")) != -1) {
+        browserName = "Firefox";
+        browserVersion = userAgent.substring(offset + 8);
+    } else if ((nameOffset = userAgent.lastIndexOf(' ') + 1) < (verOffset = userAgent.lastIndexOf('/'))) {
+        browserName = userAgent.substring(nameOffset, verOffset);
+        browserVersion = userAgent.substring(verOffset + 1);
+        if (browserName.toLowerCase() == browserName.toUpperCase()) {
+            browserName = navigator.appName;
+        }
+    }
+
+    document.getElementById("current-browser").innerHTML = `${browserName} on ${osName}`;
+}
+
+getBrowserInfo();
+
 </script>
 	<h3>Tools available</h3>
 	<ul>
