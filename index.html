@@ -37,6 +37,41 @@ a:active {
   background-color: transparent;
   text-decoration: underline;
 }
+		.responsive-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+
+        @media (max-width: 600px) {
+            .responsive-button {
+                width: 100%;
+                padding: 15px;
+                font-size: 18px;
+            }
+        }
+
+
+        @media (max-width: 768px) {
+            .responsive-button {
+                width: 80%;
+                padding: 12px;
+                font-size: 17px;
+            }
+        }
+
+
+        @media (min-width: 769px) {
+            .responsive-button {
+                width: auto;
+            }
+        }
 	</style>
 </head>
 <body>
@@ -150,7 +185,7 @@ getBrowserInfo();
 		<li><a href="/af2048/index.html">Another Flappy 2048 (Supports Touch, Landscape Mode Recommended)</a> - <a href="https://github.com/hczhcz/Another-Flappy-2048">Source</a></li>
 		<li><a href="/racing2048/index.html">Racing 2048 (Supports Touch, PC Recommended)</a> - <a href="https://github.com/hczhcz/Racing-2048">Source</a></li>
 	</ul>
-	<button onclick="darkmode()">Toggle light mode</button>
+	<button class="responsive-button" onclick="darkmode()">Toggle light mode</button>
 	<script>
 		function darkmode() {
 		   var element = document.body;
