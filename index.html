@@ -1,197 +1,191 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Sappy's Tool&Game Box</title>
-	<style>
-		body {
-  padding: 25px;
-  background-color: black;
-  color: rgb(215, 215, 215);
-  font-size: 25px;
-}
+  <title>Sappy's Tool&Game Box</title>
+  <style>
+    body {
+      padding: 25px;
+      background-color: black;
+      color: rgb(215, 215, 215);
+      font-size: 25px;
+    }
 
-.dark-mode {
-  background-color: rgb(255, 255, 255);
-  color:black ;
-}
-a:link {
-  color: green;
-  background-color: transparent;
-  text-decoration: none;
-}
+    .dark-mode {
+      background-color: white;
+      color: black;
+    }
 
-a:visited {
-  color: red;
-  background-color: transparent;
-  text-decoration: none;
-}
+    a:link { color: green; text-decoration: none; }
+    a:visited { color: red; }
+    a:hover, a:active { color: green; text-decoration: underline; }
 
-a:hover {
-  color: green;
-  background-color: transparent;
-  text-decoration: underline;
-}
+    .responsive-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
 
-a:active {
-  color: green;
-  background-color: transparent;
-  text-decoration: underline;
-}
-		.responsive-button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            background-color: #007BFF;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+    .info-box {
+      background-color: #000000;
+      border: 1px solid #888;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+    }
 
+    @media (max-width: 600px) {
+      .responsive-button { width: 100%; padding: 15px; font-size: 18px; }
+    }
 
-        @media (max-width: 600px) {
-            .responsive-button {
-                width: 100%;
-                padding: 15px;
-                font-size: 18px;
-            }
-        }
+    @media (max-width: 768px) {
+      .responsive-button { width: 80%; padding: 12px; font-size: 17px; }
+    }
 
-
-        @media (max-width: 768px) {
-            .responsive-button {
-                width: 80%;
-                padding: 12px;
-                font-size: 17px;
-            }
-        }
-
-
-        @media (min-width: 769px) {
-            .responsive-button {
-                width: auto;
-            }
-        }
-	</style>
+    @media (min-width: 769px) {
+      .responsive-button { width: auto; }
+    }
+  </style>
 </head>
 <body>
-	<h1>Sappy's Tool&Game Box</h1>
-	<h2>This website is a WIP project by Sappy. New tools and simple web games will be added as time permits.</h2>
-<div style="text-align: left;">
-	<h3>Current Time: <span id="current-time"></span></h3>
-	<h3>Current Date: <span id="current-date"></span></h3>
-	<h3><span id="current-weather"></span></h3>
-	<h3>Current Browser: <span id="current-browser"></span></h3>
-</div>
+  <h1>Sappy's Tool&Game Box</h1>
+  <h2>This website is a WIP project by Sappy. New tools and simple web games will be added as time permits.</h2>
 
-<script>
-		function updateTime() {
-    var today = new Date();
-    var time = today.toLocaleTimeString();
-    var date = today.toLocaleDateString();
-    document.getElementById("current-time").innerHTML = time;
-    document.getElementById("current-date").innerHTML = date;
-}
+  <!-- Location Info Box -->
+  <div id="location-info-box" class="info-box" style="display: none;">
+    <p>This site needs your location to show accurate weather info. It won't be asked again unless cookies are cleared.</p>
+    <button class="responsive-button" onclick="requestLocation()">Allow Location</button>
+  </div>
 
-function fetchWeather(lat, lon) {
-    var apiKey = '1890dd1259ef7fde34de7e77ccd8728f'; // Replace with your OpenWeather API key
-    var url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+  <div style="text-align: left;">
+    <h3><span id="greeting"></span></h3>
+    <h3>Today is <span id="full-date"></span></h3>
+    <h3><span id="current-weather"></span></h3>
+    <h3>Current Browser: <span id="current-browser"></span></h3>
+  </div>
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            var location = data.name;
-            var weatherDescription = data.weather[0].description;
-            var temperature = data.main.temp;
-            var rainProbability = data.rain ? (data.rain['1h'] || data.rain['3h'] || 0) : 0;
-            document.getElementById("current-weather").innerHTML = `Current Weather at your location(${location}): ${temperature}°C with rain probability of ${rainProbability}%`;
+  <h3>Tools available</h3>
+  <ul>
+    <li><a href="numconv.html">Number Conversion</a></li>
+  </ul>
+
+  <h3>Games available</h3>
+  <ul>
+    <li><a href="/2048/index.html">2048 (Supports Touch)</a> - <a href="https://github.com/gabrielecirulli/2048">Source</a></li>
+    <li><a href="/flappy2048/index.html">Flappy 2048 (Supports Touch)</a> - <a href="https://github.com/hczhcz/Flappy-2048">Source</a></li>
+    <li><a href="/af2048/index.html">Another Flappy 2048</a> - <a href="https://github.com/hczhcz/Another-Flappy-2048">Source</a></li>
+    <li><a href="/racing2048/index.html">Racing 2048</a> - <a href="https://github.com/hczhcz/Racing-2048">Source</a></li>
+  </ul>
+
+  <button class="responsive-button" onclick="darkmode()">Toggle dark mode</button>
+
+  <script>
+    function updateTimeAndGreeting() {
+      const now = new Date();
+      const hours = now.getHours();
+      const greeting = hours < 12 ? "Good Morning" : hours < 18 ? "Good Afternoon" : "Good Evening";
+
+      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateStr = now.toLocaleDateString('en-US', dateOptions);
+      const timeStr = now.toLocaleTimeString('en-US');
+
+      document.getElementById("greeting").textContent = greeting;
+      document.getElementById("full-date").textContent = `${dateStr} ${timeStr}`;
+    }
+
+    function degreesToCardinal(degree) {
+      const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+      return dirs[Math.round(degree / 22.5) % 16];
+    }
+
+    function fetchWeather(lat, lon) {
+      const apiKey = 'a2d25c6380af0bb229c55b1b6ef83f2d';
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+          return res.json();
         })
-        .catch(error => {
-            console.error('Error fetching weather data:', error);
-            document.getElementById("current-weather").innerHTML = 'Unable to retrieve weather data';
-        });
-}
+        .then(data => {
+          const loc = data.name;
+          const temp = data.main.temp;
+          const cond = data.weather[0].description;
+          const hum = data.main.humidity;
+          const pres = data.main.pressure;
+          const spd = (data.wind.speed * 3.6).toFixed(1);
+          const gst = data.wind.gust ? (data.wind.gust * 3.6).toFixed(1) : "N/A";
+          const deg = data.wind.deg;
+          const dir = degreesToCardinal(deg);
 
-function getLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-            fetchWeather(lat, lon);
-        }, error => {
-            console.error('Error getting location:', error);
-            document.getElementById("current-weather").innerHTML = 'Location access denied';
+          document.getElementById("current-weather").innerHTML =
+            `The current weather in <u>${loc}</u> is ${cond} with a temperature of ${temp}°C and humidity of ${hum}%.<br>
+            The current air pressure is ${pres} hPa with the wind blowing at ${spd} km/hr (gusting at ${gst} km/hr) from ${deg}° (${dir}).`;
+        })
+        .catch(err => {
+          console.error('Weather error:', err);
+          document.getElementById("current-weather").textContent = 'Unable to retrieve weather data';
         });
-    } else {
-        document.getElementById("current-weather").innerHTML = 'Geolocation not supported';
     }
-}
 
-setInterval(updateTime, 1000);
-getLocation();
-	function getBrowserInfo() {
-    var userAgent = navigator.userAgent;
-    var browserName = navigator.appName;
-    var browserVersion = '' + parseFloat(navigator.appVersion);
-    var osName = 'Unknown OS';
-
-    if (userAgent.indexOf("Win") != -1) osName = "Windows";
-    if (userAgent.indexOf("Mac") != -1) osName = "Macintosh";
-    if (userAgent.indexOf("Linux") != -1) osName = "Linux";
-    if (userAgent.indexOf("Android") != -1) osName = "Android";
-    if (userAgent.indexOf("like Mac") != -1) osName = "iOS";
-
-    if ((offset = userAgent.indexOf("Opera")) != -1) {
-        browserName = "Opera";
-        browserVersion = userAgent.substring(offset + 6);
-        if ((offset = userAgent.indexOf("Version")) != -1)
-            browserVersion = userAgent.substring(offset + 8);
-    } else if ((offset = userAgent.indexOf("MSIE")) != -1) {
-        browserName = "Internet Explorer";
-        browserVersion = userAgent.substring(offset + 5);
-    } else if ((offset = userAgent.indexOf("Chrome")) != -1) {
-        browserName = "Chrome";
-        browserVersion = userAgent.substring(offset + 7);
-    } else if ((offset = userAgent.indexOf("Safari")) != -1) {
-        browserName = "Safari";
-        browserVersion = userAgent.substring(offset + 7);
-        if ((offset = userAgent.indexOf("Version")) != -1)
-            browserVersion = userAgent.substring(offset + 8);
-    } else if ((offset = userAgent.indexOf("Firefox")) != -1) {
-        browserName = "Firefox";
-        browserVersion = userAgent.substring(offset + 8);
-    } else if ((nameOffset = userAgent.lastIndexOf(' ') + 1) < (verOffset = userAgent.lastIndexOf('/'))) {
-        browserName = userAgent.substring(nameOffset, verOffset);
-        browserVersion = userAgent.substring(verOffset + 1);
-        if (browserName.toLowerCase() == browserName.toUpperCase()) {
-            browserName = navigator.appName;
+    function requestLocation() {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          fetchWeather(lat, lon);
+          document.getElementById("location-info-box").style.display = "none";
+          document.cookie = "locationConsent=granted; path=/; max-age=31536000"; // 1 year
+        },
+        err => {
+          console.error('Location error:', err);
+          document.getElementById("current-weather").textContent = 'Location access denied';
         }
+      );
     }
 
-    document.getElementById("current-browser").innerHTML = `${browserName} on ${osName}`;
-}
+    function checkLocationConsent() {
+      if (document.cookie.includes("locationConsent=granted")) {
+        requestLocation();
+      } else {
+        document.getElementById("location-info-box").style.display = "block";
+      }
+    }
 
-getBrowserInfo();
+    function getBrowserInfo() {
+      const ua = navigator.userAgent;
+      let browser = "Unknown";
+      let os = "Unknown";
 
-</script>
-	<iframe frameborder=0 height=100% width=100% src="https://bestsolaris.com/solaris.php?postid=30876" allowfullscreen scrolling=no allowtransparency></iframe>
-	<h3>Tools available</h3>
-	<ul>
-		<li><a href="numconv.html">Number Conversion</a></li>
-	</ul>
-	<h3>Games available</h3>
-	<ul>
-		<li><a href="/2048/index.html">2048 (Supports Touch)</a> - <a href="https://github.com/gabrielecirulli/2048">Source</a></li>
-		<li><a href="/flappy2048/index.html">Flappy 2048 (Supports Touch)</a> - <a href="https://github.com/hczhcz/Flappy-2048">Source</a></li>
-		<li><a href="/af2048/index.html">Another Flappy 2048 (Supports Touch, Landscape Mode Recommended)</a> - <a href="https://github.com/hczhcz/Another-Flappy-2048">Source</a></li>
-		<li><a href="/racing2048/index.html">Racing 2048 (Supports Touch, PC Recommended)</a> - <a href="https://github.com/hczhcz/Racing-2048">Source</a></li>
-	</ul>
-	<button class="responsive-button" onclick="darkmode()">Toggle light mode</button>
-	<script>
-		function darkmode() {
-		   var element = document.body;
-		   element.classList.toggle("dark-mode");
-		}
-		</script>
+      if (ua.includes("Chrome")) browser = "Chrome";
+      else if (ua.includes("Firefox")) browser = "Firefox";
+      else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+      else if (ua.includes("MSIE") || ua.includes("Trident")) browser = "Internet Explorer";
+      else if (ua.includes("Edge")) browser = "Edge";
+
+      if (ua.includes("Windows")) os = "Windows";
+      else if (ua.includes("Mac")) os = "MacOS";
+      else if (ua.includes("Linux")) os = "Linux";
+      else if (ua.includes("Android")) os = "Android";
+      else if (ua.includes("like Mac")) os = "iOS";
+
+      document.getElementById("current-browser").textContent = `${browser} on ${os}`;
+    }
+
+    function darkmode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    // Init
+    setInterval(updateTimeAndGreeting, 1000);
+    updateTimeAndGreeting();
+    getBrowserInfo();
+    checkLocationConsent();
+  </script>
 </body>
 </html>
