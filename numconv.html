@@ -1,191 +1,238 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Sappy's Tool&Game Box</title>
-  <style>
-    body {
-      padding: 25px;
-      background-color: black;
-      color: rgb(215, 215, 215);
-      font-size: 25px;
-    }
-
-    .dark-mode {
-      background-color: white;
-      color: black;
-    }
-
-    a:link { color: green; text-decoration: none; }
-    a:visited { color: red; }
-    a:hover, a:active { color: green; text-decoration: underline; }
-
-    .responsive-button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      background-color: #007BFF;
-      color: white;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .info-box {
-      background-color: #000000;
-      border: 1px solid #888;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-    }
-
-    @media (max-width: 600px) {
-      .responsive-button { width: 100%; padding: 15px; font-size: 18px; }
-    }
-
-    @media (max-width: 768px) {
-      .responsive-button { width: 80%; padding: 12px; font-size: 17px; }
-    }
-
-    @media (min-width: 769px) {
-      .responsive-button { width: auto; }
-    }
-  </style>
-</head>
-<body>
-  <h1>Sappy's Tool&Game Box</h1>
-  <h2>This website is a WIP project by Sappy. New tools and simple web games will be added as time permits.</h2>
-
-  <!-- Location Info Box -->
-  <div id="location-info-box" class="info-box" style="display: none;">
-    <p>This site needs your location to show accurate weather info. It won't be asked again unless cookies are cleared.</p>
-    <button class="responsive-button" onclick="requestLocation()">Allow Location</button>
-  </div>
-
-  <div style="text-align: left;">
-    <h3><span id="greeting"></span></h3>
-    <h3>Today is <span id="full-date"></span></h3>
-    <h3><span id="current-weather"></span></h3>
-    <h3>Current Browser: <span id="current-browser"></span></h3>
-  </div>
-
-  <h3>Tools available</h3>
-  <ul>
-    <li><a href="numconv.html">Number Conversion</a></li>
-  </ul>
-
-  <h3>Games available</h3>
-  <ul>
-    <li><a href="/2048/index.html">2048 (Supports Touch)</a> - <a href="https://github.com/gabrielecirulli/2048">Source</a></li>
-    <li><a href="/flappy2048/index.html">Flappy 2048 (Supports Touch)</a> - <a href="https://github.com/hczhcz/Flappy-2048">Source</a></li>
-    <li><a href="/af2048/index.html">Another Flappy 2048</a> - <a href="https://github.com/hczhcz/Another-Flappy-2048">Source</a></li>
-    <li><a href="/racing2048/index.html">Racing 2048</a> - <a href="https://github.com/hczhcz/Racing-2048">Source</a></li>
-  </ul>
-
-  <button class="responsive-button" onclick="darkmode()">Toggle dark mode</button>
-
-  <script>
-    function updateTimeAndGreeting() {
-      const now = new Date();
-      const hours = now.getHours();
-      const greeting = hours < 12 ? "Good Morning" : hours < 18 ? "Good Afternoon" : "Good Evening";
-
-      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const dateStr = now.toLocaleDateString('en-US', dateOptions);
-      const timeStr = now.toLocaleTimeString('en-US');
-
-      document.getElementById("greeting").textContent = greeting;
-      document.getElementById("full-date").textContent = `${dateStr} ${timeStr}`;
-    }
-
-    function degreesToCardinal(degree) {
-      const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-      return dirs[Math.round(degree / 22.5) % 16];
-    }
-
-    function fetchWeather(lat, lon) {
-      const apiKey = 'a2d25c6380af0bb229c55b1b6ef83f2d';
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
-
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-          return res.json();
-        })
-        .then(data => {
-          const loc = data.name;
-          const temp = data.main.temp;
-          const cond = data.weather[0].description;
-          const hum = data.main.humidity;
-          const pres = data.main.pressure;
-          const spd = (data.wind.speed * 3.6).toFixed(1);
-          const gst = data.wind.gust ? (data.wind.gust * 3.6).toFixed(1) : "N/A";
-          const deg = data.wind.deg;
-          const dir = degreesToCardinal(deg);
-
-          document.getElementById("current-weather").innerHTML =
-            `The current weather in <u>${loc}</u> is ${cond} with a temperature of ${temp}°C and humidity of ${hum}%.<br>
-            The current air pressure is ${pres} hPa with the wind blowing at ${spd} km/hr (gusting at ${gst} km/hr) from ${deg}° (${dir}).`;
-        })
-        .catch(err => {
-          console.error('Weather error:', err);
-          document.getElementById("current-weather").textContent = 'Unable to retrieve weather data';
-        });
-    }
-
-    function requestLocation() {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
-          fetchWeather(lat, lon);
-          document.getElementById("location-info-box").style.display = "none";
-          document.cookie = "locationConsent=granted; path=/; max-age=31536000"; // 1 year
-        },
-        err => {
-          console.error('Location error:', err);
-          document.getElementById("current-weather").textContent = 'Location access denied';
-        }
-      );
-    }
-
-    function checkLocationConsent() {
-      if (document.cookie.includes("locationConsent=granted")) {
-        requestLocation();
-      } else {
-        document.getElementById("location-info-box").style.display = "block";
+  <head>
+    <title>Number Converter</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        padding: 25px;
+        background-color: white;
+        color: black;
+        font-size: 20px;
+        font-family: Arial, sans-serif;
       }
+
+      .dark-mode {
+        background-color: black;
+        color: #d7d7d7;
+      }
+
+      input {
+        margin-bottom: 10px;
+        font-size: 18px;
+      }
+
+      label {
+        display: block;
+        margin-top: 10px;
+      }
+
+      #inline-info-box {
+        display: none;
+        margin-top: 5px;
+                background-color: #ffffff;
+               font-size: 16px;
+      }
+
+      .dark-mode #inline-info-box {
+        background-color: #000000;
+        color: #ffffff;
+        border-left-color: #4eafff;
+      }
+
+      #inline-info-box span {
+        display: inline-block;
+        margin-right: 8px;
+      }
+
+      .bit-options label {
+        margin-right: 10px;
+        font-size: 16px;
+      }
+
+      button {
+        font-size: 18px;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Number Converter</h1>
+	<p>
+      <strong class="important"><a href="index.html">Click here to go back to the index Page</strong></a>
+      </p>
+    <p>Convert numbers between Decimal, Binary, Hexadecimal, and Octal.</p>
+
+    <form>
+      <label for="decimal">Decimal:</label>
+      <input type="text" id="decimal" name="decimal" />
+
+      <label for="binary">Binary:</label>
+      <input type="text" id="binary" name="binary" />
+      <div id="inline-info-box">
+        <div>The above shown value is in 2's complement</div>
+        <div class="bit-options">
+          <span>You can additionally choose a bit size below:</span>
+          <label><input type="radio" name="bitLength" value="8" id="bit8" /> 8-bit</label>
+          <label><input type="radio" name="bitLength" value="16" id="bit16" /> 16-bit</label>
+          <label><input type="radio" name="bitLength" value="32" id="bit32" checked /> 32-bit</label>
+          <label><input type="radio" name="bitLength" value="64" id="bit64" /> 64-bit</label>
+        </div>
+      </div>
+
+      <label for="hexadecimal">Hexadecimal:</label>
+      <input type="text" id="hexadecimal" name="hexadecimal" />
+
+      <label for="octal">Octal:</label>
+      <input type="text" id="octal" name="octal" />
+
+      <button type="button" id="clear">CLEAR</button>
+    </form>
+
+    <button onclick="darkmode()">Toggle dark mode</button>
+
+    <script>
+      function darkmode() {
+    document.body.classList.toggle("dark-mode");
+  }
+
+  // Auto-enable dark mode if user prefers dark theme
+  window.addEventListener('load', function () {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      darkmode();
     }
+  });
 
-    function getBrowserInfo() {
-      const ua = navigator.userAgent;
-      let browser = "Unknown";
-      let os = "Unknown";
+      const decimalInput = document.getElementById("decimal");
+      const binaryInput = document.getElementById("binary");
+      const hexadecimalInput = document.getElementById("hexadecimal");
+      const octalInput = document.getElementById("octal");
+      const clearButton = document.getElementById("clear");
+      const infoBox = document.getElementById("inline-info-box");
 
-      if (ua.includes("Chrome")) browser = "Chrome";
-      else if (ua.includes("Firefox")) browser = "Firefox";
-      else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
-      else if (ua.includes("MSIE") || ua.includes("Trident")) browser = "Internet Explorer";
-      else if (ua.includes("Edge")) browser = "Edge";
+      const bitRadios = {
+        8: document.getElementById("bit8"),
+        16: document.getElementById("bit16"),
+        32: document.getElementById("bit32"),
+        64: document.getElementById("bit64"),
+      };
 
-      if (ua.includes("Windows")) os = "Windows";
-      else if (ua.includes("Mac")) os = "MacOS";
-      else if (ua.includes("Linux")) os = "Linux";
-      else if (ua.includes("Android")) os = "Android";
-      else if (ua.includes("like Mac")) os = "iOS";
+      let currentNegativeValue = null;
 
-      document.getElementById("current-browser").textContent = `${browser} on ${os}`;
-    }
+      clearButton.addEventListener("click", function () {
+        decimalInput.value = "";
+        binaryInput.value = "";
+        hexadecimalInput.value = "";
+        octalInput.value = "";
+        infoBox.style.display = "none";
+        currentNegativeValue = null;
+      });
 
-    function darkmode() {
-      document.body.classList.toggle("dark-mode");
-    }
+      function toTwosComplement(num, bits) {
+        const maxNeg = -1 * Math.pow(2, bits - 1);
+        const maxPos = Math.pow(2, bits - 1) - 1;
+        if (num < maxNeg || num > maxPos) return null;
+        return (num >>> 0).toString(2).padStart(bits, "0").slice(-bits);
+      }
 
-    // Init
-    setInterval(updateTimeAndGreeting, 1000);
-    updateTimeAndGreeting();
-    getBrowserInfo();
-    checkLocationConsent();
-  </script>
-</body>
+      function updateBitOptions(num) {
+        infoBox.style.display = num < 0 ? "block" : "none";
+        currentNegativeValue = num < 0 ? num : null;
+
+        Object.keys(bitRadios).forEach((bit) => {
+          const parsedBit = parseInt(bit);
+          const fits = num >= -Math.pow(2, parsedBit - 1) && num < Math.pow(2, parsedBit - 1);
+          bitRadios[bit].disabled = !fits;
+        });
+      }
+
+      function updateBinaryField(num) {
+        if (num >= 0) {
+          binaryInput.value = num.toString(2);
+          infoBox.style.display = "none";
+        } else {
+          updateBitOptions(num);
+          const selectedBit = parseInt(
+            document.querySelector('input[name="bitLength"]:checked').value
+          );
+          const twos = toTwosComplement(num, selectedBit);
+          binaryInput.value = twos ?? "Too large for selected bit";
+        }
+      }
+
+      function updateAllFromDecimal(value) {
+        updateBinaryField(value);
+        hexadecimalInput.value = value.toString(16).toUpperCase();
+        octalInput.value = value.toString(8);
+      }
+
+      function safeParse(value, base, regex) {
+        if (regex.test(value)) {
+          const num = parseInt(value, base);
+          return isNaN(num) ? null : num;
+        }
+        return null;
+      }
+
+      decimalInput.addEventListener("input", function () {
+        const value = parseInt(this.value, 10);
+        if (!isNaN(value)) {
+          updateAllFromDecimal(value);
+        } else {
+          binaryInput.value = hexadecimalInput.value = octalInput.value = "Invalid";
+          infoBox.style.display = "none";
+        }
+      });
+
+      binaryInput.addEventListener("input", function () {
+        const value = this.value;
+        const parsed = safeParse(value, 2, /^-?[01]+$/);
+        if (parsed !== null) {
+          decimalInput.value = parsed;
+          hexadecimalInput.value = parsed.toString(16).toUpperCase();
+          octalInput.value = parsed.toString(8);
+          updateBinaryField(parsed);
+        } else {
+          decimalInput.value = hexadecimalInput.value = octalInput.value = "Invalid";
+          infoBox.style.display = "none";
+        }
+      });
+
+      hexadecimalInput.addEventListener("input", function () {
+        const value = this.value;
+        const parsed = safeParse(value, 16, /^-?[0-9a-fA-F]+$/);
+        if (parsed !== null) {
+          decimalInput.value = parsed;
+          octalInput.value = parsed.toString(8);
+          updateBinaryField(parsed);
+        } else {
+          decimalInput.value = binaryInput.value = octalInput.value = "Invalid";
+          infoBox.style.display = "none";
+        }
+      });
+
+      octalInput.addEventListener("input", function () {
+        const value = this.value;
+        const parsed = safeParse(value, 8, /^-?[0-7]+$/);
+        if (parsed !== null) {
+          decimalInput.value = parsed;
+          hexadecimalInput.value = parsed.toString(16).toUpperCase();
+          updateBinaryField(parsed);
+        } else {
+          decimalInput.value = binaryInput.value = hexadecimalInput.value = "Invalid";
+          infoBox.style.display = "none";
+        }
+      });
+
+      // Handle bit option change
+      document.querySelectorAll('input[name="bitLength"]').forEach((radio) => {
+        radio.addEventListener("change", () => {
+          if (currentNegativeValue !== null) {
+            updateBinaryField(currentNegativeValue);
+          }
+        });
+      });
+    </script>
+  </body>
 </html>
