@@ -1,191 +1,228 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Sappy's Tool&Game Box</title>
-  <style>
-    body {
-      padding: 25px;
-      background-color: black;
-      color: rgb(215, 215, 215);
-      font-size: 25px;
-    }
-
-    .dark-mode {
-      background-color: white;
-      color: black;
-    }
-
-    a:link { color: green; text-decoration: none; }
-    a:visited { color: red; }
-    a:hover, a:active { color: green; text-decoration: underline; }
-
-    .responsive-button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      background-color: #007BFF;
-      color: white;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .info-box {
-      background-color: #000000;
-      border: 1px solid #888;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-    }
-
-    @media (max-width: 600px) {
-      .responsive-button { width: 100%; padding: 15px; font-size: 18px; }
-    }
-
-    @media (max-width: 768px) {
-      .responsive-button { width: 80%; padding: 12px; font-size: 17px; }
-    }
-
-    @media (min-width: 769px) {
-      .responsive-button { width: auto; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Business Card OCR (LLM + Camera)</title>
+<style>
+  body { font-family: system-ui, sans-serif; background:#f9f9f9; margin:0; padding:1rem; }
+  h1 { text-align:center; font-size:1.5rem; }
+  .container { max-width:480px; margin:auto; background:#fff; padding:1rem;
+               border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+  input[type=file]{display:block;margin:0.5rem 0;}
+  button{display:block;width:100%;padding:0.75rem;font-size:1rem;margin:0.5rem 0;
+         border:none;border-radius:4px;color:white;background:#0077ff;}
+  #cameraContainer{display:none;text-align:center;}
+  video,canvas {width:100%;border-radius:8px;margin-top:0.5rem;}
+  .field{margin-bottom:0.75rem;}
+  label{display:block;font-weight:600;margin-bottom:0.25rem;}
+  input[type=text],input[type=email],input[type=tel]{width:100%;padding:0.5rem;
+       border:1px solid #ccc;border-radius:4px;font-size:1rem;}
+  #status{text-align:center;color:#0077ff;font-weight:bold;}
+</style>
 </head>
 <body>
-  <h1>Sappy's Tool&Game Box</h1>
-  <h2>This website is a WIP project by Sappy. New tools and simple web games will be added as time permits.</h2>
+<div class="container">
+  <h1>Business Card OCR (LLM + Camera)</h1>
+  <p>Upload a photo or capture one with your camera.</p>
+  <input id="imageInput" type="file" accept="image/*" capture="environment">
+  <button id="cameraBtn">📷 Open Camera</button>
 
-  <!-- Location Info Box -->
-  <div id="location-info-box" class="info-box" style="display: none;">
-    <p>This site needs your location to show accurate weather info. It won't be asked again unless cookies are cleared.</p>
-    <button class="responsive-button" onclick="requestLocation()">Allow Location</button>
+  <div id="cameraContainer">
+    <video id="camera" autoplay playsinline></video>
+    <button id="captureBtn">🎯 Capture Photo</button>
+    <button id="closeCameraBtn" style="background:#999;">Close Camera</button>
+    <canvas id="photoCanvas" style="display:none;"></canvas>
   </div>
 
-  <div style="text-align: left;">
-    <h3><span id="greeting"></span></h3>
-    <h3>Today is <span id="full-date"></span></h3>
-    <h3><span id="current-weather"></span></h3>
-    <h3>Current Browser: <span id="current-browser"></span></h3>
+  <div id="status"></div>
+
+  <div id="formSection" style="display:none;">
+    <div class="field"><label>Name</label><input id="name" type="text"></div>
+    <div class="field"><label>Phone</label><input id="phone" type="tel"></div>
+    <div class="field"><label>Email</label><input id="email" type="email"></div>
+    <div class="field"><label>Address</label><input id="address" type="text"></div>
+    <div class="field"><label>Company</label><input id="company" type="text"></div>
+    <button id="downloadVCard">Generate vCard</button>
   </div>
+</div>
 
-  <h3>Tools available</h3>
-  <ul>
-    <li><a href="numconv.html">Number Conversion</a></li>
-  </ul>
+<script>
+// ============================
+// CONFIG
+// ============================
+const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"; // <-- Replace with your key
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
-  <h3>Games available</h3>
-  <ul>
-    <li><a href="/2048/index.html">2048 (Supports Touch)</a> - <a href="https://github.com/gabrielecirulli/2048">Source</a></li>
-    <li><a href="/flappy2048/index.html">Flappy 2048 (Supports Touch)</a> - <a href="https://github.com/hczhcz/Flappy-2048">Source</a></li>
-    <li><a href="/af2048/index.html">Another Flappy 2048</a> - <a href="https://github.com/hczhcz/Another-Flappy-2048">Source</a></li>
-    <li><a href="/racing2048/index.html">Racing 2048</a> - <a href="https://github.com/hczhcz/Racing-2048">Source</a></li>
-  </ul>
+// Elements
+const imgInput = document.getElementById('imageInput');
+const cameraBtn = document.getElementById('cameraBtn');
+const cameraContainer = document.getElementById('cameraContainer');
+const video = document.getElementById('camera');
+const captureBtn = document.getElementById('captureBtn');
+const closeCameraBtn = document.getElementById('closeCameraBtn');
+const photoCanvas = document.getElementById('photoCanvas');
+const statusDiv = document.getElementById('status');
+const formSection = document.getElementById('formSection');
+const fields = {
+  name: document.getElementById('name'),
+  phone: document.getElementById('phone'),
+  email: document.getElementById('email'),
+  address: document.getElementById('address'),
+  company: document.getElementById('company')
+};
 
-  <button class="responsive-button" onclick="darkmode()">Toggle dark mode</button>
+let stream = null;
 
-  <script>
-    function updateTimeAndGreeting() {
-      const now = new Date();
-      const hours = now.getHours();
-      const greeting = hours < 12 ? "Good Morning" : hours < 18 ? "Good Afternoon" : "Good Evening";
+// ============================
+// HELPERS
+// ============================
+function sanitize(s=''){
+  return s.replace(/["':;]+/g,'').replace(/\s+/g,' ').trim();
+}
+function parseJsonLoose(str){
+  try { return JSON.parse(str); }
+  catch {
+    const out = {};
+    const lines = str.split(/\n|,/);
+    lines.forEach(line=>{
+      const m=line.match(/(Name|Phone Number|Email|Address|Company Name)\s*[:\-]?\s*(.*)/i);
+      if(m) out[m[1]] = m[2];
+    });
+    return out;
+  }
+}
 
-      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const dateStr = now.toLocaleDateString('en-US', dateOptions);
-      const timeStr = now.toLocaleTimeString('en-US');
+// ============================
+//  OCR + Extraction
+// ============================
+async function processImage(base64) {
+  statusDiv.textContent = "Sending to LLM...";
+  formSection.style.display = "none";
 
-      document.getElementById("greeting").textContent = greeting;
-      document.getElementById("full-date").textContent = `${dateStr} ${timeStr}`;
-    }
+  const prompt = `
+You are a precise OCR and contact extractor AI.
+Perform OCR + cleanup from the given business card image.
+Return clean JSON with:
+{Name:"", "Phone Number":"", "Email":"", "Address":"", "Company Name":""}
+Each value must be clean, no quotes or colons inside.`;
 
-    function degreesToCardinal(degree) {
-      const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-      return dirs[Math.round(degree / 22.5) % 16];
-    }
+  const body = {
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "You extract structured contact info from images of business cards." },
+      { role: "user", content: [
+          { type: "text", text: prompt },
+          { type: "image_url", image_url: { url: "data:image/jpeg;base64," + base64 } }
+      ]}
+    ],
+    temperature: 0
+  };
 
-    function fetchWeather(lat, lon) {
-      const apiKey = 'a2d25c6380af0bb229c55b1b6ef83f2d';
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+  try {
+    const res = await fetch(OPENAI_API_URL, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + OPENAI_API_KEY
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content || "{}";
+    console.log('LLM Output:', content);
+    const parsed = parseJsonLoose(content);
 
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-          return res.json();
-        })
-        .then(data => {
-          const loc = data.name;
-          const temp = data.main.temp;
-          const cond = data.weather[0].description;
-          const hum = data.main.humidity;
-          const pres = data.main.pressure;
-          const spd = (data.wind.speed * 3.6).toFixed(1);
-          const gst = data.wind.gust ? (data.wind.gust * 3.6).toFixed(1) : "N/A";
-          const deg = data.wind.deg;
-          const dir = degreesToCardinal(deg);
+    fields.name.value = sanitize(parsed["Name"]);
+    fields.phone.value = sanitize(parsed["Phone Number"]);
+    fields.email.value = sanitize(parsed["Email"]);
+    fields.address.value = sanitize(parsed["Address"]);
+    fields.company.value = sanitize(parsed["Company Name"]);
 
-          document.getElementById("current-weather").innerHTML =
-            `The current weather in <u>${loc}</u> is ${cond} with a temperature of ${temp}°C and humidity of ${hum}%.<br>
-            The current air pressure is ${pres} hPa with the wind blowing at ${spd} km/hr (gusting at ${gst} km/hr) from ${deg}° (${dir}).`;
-        })
-        .catch(err => {
-          console.error('Weather error:', err);
-          document.getElementById("current-weather").textContent = 'Unable to retrieve weather data';
-        });
-    }
+    formSection.style.display = "block";
+    statusDiv.textContent = "✅ Extraction complete.";
+  } catch(err){
+    console.error(err);
+    statusDiv.textContent = "⚠️ LLM failed. Please retry.";
+  }
+}
 
-    function requestLocation() {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
-          fetchWeather(lat, lon);
-          document.getElementById("location-info-box").style.display = "none";
-          document.cookie = "locationConsent=granted; path=/; max-age=31536000"; // 1 year
-        },
-        err => {
-          console.error('Location error:', err);
-          document.getElementById("current-weather").textContent = 'Location access denied';
-        }
-      );
-    }
+// ============================
+//  File Upload Handler
+// ============================
+imgInput.addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const base64 = await new Promise(r=>{
+    const reader=new FileReader();
+    reader.onload=()=>r(reader.result.split(',')[1]);
+    reader.readAsDataURL(file);
+  });
+  await processImage(base64);
+});
 
-    function checkLocationConsent() {
-      if (document.cookie.includes("locationConsent=granted")) {
-        requestLocation();
-      } else {
-        document.getElementById("location-info-box").style.display = "block";
-      }
-    }
+// ============================
+//  Camera Capture Handlers
+// ============================
+cameraBtn.addEventListener('click', async ()=>{
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    video.srcObject = stream;
+    cameraContainer.style.display = "block";
+  } catch (err) {
+    alert("Camera not available or permission denied.");
+  }
+});
 
-    function getBrowserInfo() {
-      const ua = navigator.userAgent;
-      let browser = "Unknown";
-      let os = "Unknown";
+closeCameraBtn.addEventListener('click', ()=>{
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+    stream = null;
+  }
+  cameraContainer.style.display = "none";
+});
 
-      if (ua.includes("Chrome")) browser = "Chrome";
-      else if (ua.includes("Firefox")) browser = "Firefox";
-      else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
-      else if (ua.includes("MSIE") || ua.includes("Trident")) browser = "Internet Explorer";
-      else if (ua.includes("Edge")) browser = "Edge";
+captureBtn.addEventListener('click', ()=>{
+  if (!stream) return;
+  const ctx = photoCanvas.getContext('2d');
+  photoCanvas.width = video.videoWidth;
+  photoCanvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0);
+  const dataUrl = photoCanvas.toDataURL('image/jpeg');
+  const base64 = dataUrl.split(',')[1];
+  cameraContainer.style.display = "none";
+  if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  processImage(base64);
+});
 
-      if (ua.includes("Windows")) os = "Windows";
-      else if (ua.includes("Mac")) os = "MacOS";
-      else if (ua.includes("Linux")) os = "Linux";
-      else if (ua.includes("Android")) os = "Android";
-      else if (ua.includes("like Mac")) os = "iOS";
+// ============================
+//  vCard Generation
+// ============================
+document.getElementById('downloadVCard').addEventListener('click', ()=>{
+  const n = sanitize(fields.name.value);
+  const p = sanitize(fields.phone.value);
+  const e = sanitize(fields.email.value);
+  const a = sanitize(fields.address.value);
+  const c = sanitize(fields.company.value);
 
-      document.getElementById("current-browser").textContent = `${browser} on ${os}`;
-    }
+  const vcf = `BEGIN:VCARD
+VERSION:3.0
+N:${n}
+FN:${n}
+ORG:${c}
+TEL;TYPE=CELL:${p}
+EMAIL;TYPE=INTERNET:${e}
+ADR;TYPE=WORK:;;${a}
+END:VCARD`;
 
-    function darkmode() {
-      document.body.classList.toggle("dark-mode");
-    }
-
-    // Init
-    setInterval(updateTimeAndGreeting, 1000);
-    updateTimeAndGreeting();
-    getBrowserInfo();
-    checkLocationConsent();
-  </script>
+  const blob = new Blob([vcf], { type: "text/vcard" });
+  const url = URL.createObjectURL(blob);
+  const aTag = document.createElement('a');
+  aTag.href = url;
+  aTag.download = (n || 'contact') + '.vcf';
+  aTag.click();
+  URL.revokeObjectURL(url);
+});
+</script>
 </body>
 </html>
