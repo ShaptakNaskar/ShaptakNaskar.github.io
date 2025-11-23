@@ -1,0 +1,21 @@
+{
+  "name": "sappys-directory",
+  "version": "1.0.0",
+  "description": "Shaptak Naskar's portfolio website",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "build": "echo 'Build complete'"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "csv-parser": "^3.0.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
