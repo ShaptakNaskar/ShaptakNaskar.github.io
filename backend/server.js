@@ -51,25 +51,25 @@ app.get('/api/projects', (req, res) => {
 // CV Download endpoint - CRITICAL: Must be before wildcard route
 app.get('/api/download-cv', (req, res) => {
   const cvPath = path.join(__dirname, 'ShaptakCV.pdf');
-  
+
   console.log('CV download requested. Path:', cvPath);
-  
+
   if (!fs.existsSync(cvPath)) {
     console.error('CV file not found at:', cvPath);
     return res.status(404).json({ error: 'CV not found' });
   }
-  
+
   // Set proper headers for PDF download
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename="ShaptakCV.pdf"');
-  
+
   // Stream the file
   const fileStream = fs.createReadStream(cvPath);
   fileStream.on('error', (err) => {
     console.error('Error streaming CV:', err);
     res.status(500).json({ error: 'Failed to download CV' });
   });
-  
+
   fileStream.pipe(res);
 });
 
@@ -85,10 +85,12 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📂 Backend directory: ${__dirname}`);
-  console.log(`📄 Public directory: ${path.join(__dirname, '../public')}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📂 Backend directory: ${__dirname}`);
+    console.log(`📄 Public directory: ${path.join(__dirname, '../public')}`);
+  });
+}
 
 module.exports = app;
