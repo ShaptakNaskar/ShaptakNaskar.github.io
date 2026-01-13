@@ -26,7 +26,7 @@ function App() {
           <div className="flex gap-4 items-center">
             <a
               href="/api/download-cv"
-              className="hidden sm:inline-flex items-center px-4 py-2 bg-teal-50 dark:bg-primary/10 hover:bg-teal-100 dark:hover:bg-primary/20 text-teal-700 dark:text-primary border border-teal-200 dark:border-primary/50 rounded-lg hover:scale-105 transition-all duration-300 font-mono text-sm"
+              className="inline-flex items-center px-4 py-2 bg-teal-50 dark:bg-primary/10 hover:bg-teal-100 dark:hover:bg-primary/20 text-teal-700 dark:text-primary border border-teal-200 dark:border-primary/50 rounded-lg hover:scale-105 transition-all duration-300 font-mono text-sm"
             >
               Download CV
             </a>
