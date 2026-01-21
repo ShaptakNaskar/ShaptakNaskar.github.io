@@ -36,25 +36,43 @@ function generateLevel(levelNum) {
     const paddleWidth = Math.max(60, 100 - (levelNum * 5)); // Decrease paddle width, min 60
 
     // Pattern Generation
-    const patterns = ['full', 'checkerboard', 'rows', 'random', 'dense', 'columns'];
-    // Cycle patterns but vary based on level
-    const patternType = patterns[levelNum % patterns.length];
+    const allPatterns = ['checkerboard', 'rows', 'columns', 'random', 'dense'];
+    // Removed 'full' from easyPatterns to ensure visual distinctness on start
+    const easyPatterns = ['checkerboard', 'rows', 'columns'];
+
+    // Pick random pattern
+    // Level 0: Easy patterns only
+    // Level 1+: All patterns
+    const pool = levelNum === 0 ? easyPatterns : allPatterns;
+    const patternType = pool[Math.floor(Math.random() * pool.length)];
 
     // More dense/complex patterns at higher levels
     const densityChance = Math.min(0.8, 0.4 + (levelNum * 0.05));
+
+    // Procedural Variations (Offsets & Inversions)
+    // Ensures that even if 'Checkerboard' is picked twice, it looks different
+    const rowOffset = Math.floor(Math.random() * 2);
+    const colOffset = Math.floor(Math.random() * 2);
+    const inverted = Math.random() > 0.5;
+    // Color variation
+    const colorOffset = Math.floor(Math.random() * BRICK_COLORS.length);
 
     return {
         levelNum,
         speedMultiplier,
         paddleWidth,
         patternType,
-        densityChance
+        densityChance,
+        rowOffset,
+        colOffset,
+        inverted,
+        colorOffset
     };
 }
 
 function createBrickGrid(levelConfig) {
     const grid = [];
-    const { patternType, densityChance } = levelConfig;
+    const { patternType, densityChance, rowOffset, colOffset, inverted, colorOffset } = levelConfig;
 
     for (let row = 0; row < BRICK_ROWS; row++) {
         const rowBricks = [];
@@ -62,9 +80,21 @@ function createBrickGrid(levelConfig) {
             let active = true;
 
             // Pattern Logic
-            if (patternType === 'checkerboard' && (row + col) % 2 === 0) active = false;
-            if (patternType === 'rows' && row % 2 !== 0) active = false;
-            if (patternType === 'columns' && col % 2 !== 0) active = false;
+            if (patternType === 'checkerboard') {
+                const isEven = (row + col + rowOffset) % 2 === 0;
+                if (inverted ? !isEven : isEven) active = false;
+            }
+
+            if (patternType === 'rows') {
+                const isEven = (row + rowOffset) % 2 === 0;
+                if (inverted ? !isEven : isEven) active = false;
+            }
+
+            if (patternType === 'columns') {
+                const isEven = (col + colOffset) % 2 === 0;
+                if (inverted ? !isEven : isEven) active = false;
+            }
+
             if (patternType === 'random' && Math.random() > densityChance) active = false;
 
             // Dense pattern has some durable bricks
@@ -78,7 +108,7 @@ function createBrickGrid(levelConfig) {
                     y: BRICK_OFFSET_TOP + row * (BRICK_HEIGHT + BRICK_PADDING),
                     width: BRICK_WIDTH,
                     height: BRICK_HEIGHT,
-                    color: BRICK_COLORS[row % BRICK_COLORS.length],
+                    color: BRICK_COLORS[(row + colorOffset) % BRICK_COLORS.length],
                     hits: hits,
                     active: true
                 });
@@ -221,12 +251,12 @@ function Breakout() {
         ctx.textAlign = 'center';
         ctx.fillText('Click to Start', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
         ctx.font = '14px monospace';
-        ctx.fillText('Infinite levels with increasing difficulty', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 30);
+        ctx.fillText('Infinite levels', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 30);
     };
 
     const resetBall = () => {
         const state = gameStateRef.current;
-        const baseSpeed = 4 * state.currentConfig.speedMultiplier;
+        const baseSpeed = 6 * state.currentConfig.speedMultiplier;
 
         state.ballX = CANVAS_WIDTH / 2;
         state.ballY = CANVAS_HEIGHT - 80;
@@ -303,10 +333,16 @@ function Breakout() {
         }
         fps.accumulator = fps.accumulator % targetFrameTime;
 
+        // Physics Scaling
+        // If we are strictly running at targetFrameTime intervals:
+        // High (16.6ms) -> Scale 1
+        // Low (33.3ms) -> Scale 2
+        const timeScale = targetFrameTime / FRAME_TIME_HIGH;
+
         const paddleWidth = state.currentConfig.paddleWidth;
 
         // Apply continuous keyboard input
-        const keySpeed = 10;
+        const keySpeed = 10 * timeScale;
         if (inputRef.current.keyLeft) {
             state.paddleX = Math.max(0, state.paddleX - keySpeed);
         }
@@ -316,6 +352,9 @@ function Breakout() {
 
         // Apply mouse/touch input
         if (inputRef.current.targetX !== null) {
+            // Apply smoothing for mouse/touch too?
+            // For now, direct mapping is fine, but maybe limit max speed?
+            // Absolute positioning doesn't need scaling, it just sets position.
             state.paddleX = Math.max(0, Math.min(
                 CANVAS_WIDTH - paddleWidth,
                 inputRef.current.targetX - paddleWidth / 2
@@ -326,8 +365,8 @@ function Breakout() {
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
         // Update ball
-        state.ballX += state.ballVX;
-        state.ballY += state.ballVY;
+        state.ballX += state.ballVX * timeScale;
+        state.ballY += state.ballVY * timeScale;
 
         // Wall collisions
         if (state.ballX <= BALL_RADIUS || state.ballX >= CANVAS_WIDTH - BALL_RADIUS) {
@@ -618,7 +657,7 @@ function Breakout() {
                     </Link>
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-bold text-white">Breakout</h1>
-                        <p className="text-gray-500 text-sm">Infinite levels of brick-breaking action</p>
+                        <p className="text-gray-500 text-sm">Infinite levels of action</p>
                     </div>
                 </div>
 

@@ -210,14 +210,17 @@ function Paddles() {
         }
         fps.accumulator = fps.accumulator % targetFrameTime;
 
-        // Apply continuous keyboard input
-        const keySpeed = 8;
-        if (inputRef.current.keyUp) {
-            state.playerY = Math.max(0, state.playerY - keySpeed);
-        }
-        if (inputRef.current.keyDown) {
-            state.playerY = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, state.playerY + keySpeed);
-        }
+        // Physics Scaling
+        const timeScale = targetFrameTime / FRAME_TIME_HIGH;
+
+        // Apply continuous keyboard input - REMOVED per request
+        // const keySpeed = 8 * timeScale;
+        // if (inputRef.current.keyUp) {
+        //    state.playerY = Math.max(0, state.playerY - keySpeed);
+        // }
+        // if (inputRef.current.keyDown) {
+        //    state.playerY = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, state.playerY + keySpeed);
+        // }
 
         // Apply mouse/touch input
         if (inputRef.current.targetY !== null) {
@@ -234,8 +237,8 @@ function Paddles() {
         // Center line is on static canvas now
 
         // Update ball
-        state.ballX += state.ballVX;
-        state.ballY += state.ballVY;
+        state.ballX += state.ballVX * timeScale;
+        state.ballY += state.ballVY * timeScale;
 
         // Ball collision with top/bottom
         if (state.ballY <= BALL_SIZE / 2 || state.ballY >= CANVAS_HEIGHT - BALL_SIZE / 2) {
@@ -246,7 +249,7 @@ function Paddles() {
 
         // AI paddle movement
         const aiCenter = state.aiY + PADDLE_HEIGHT / 2;
-        const aiSpeed = 4 + state.speedMultiplier;
+        const aiSpeed = (4 + state.speedMultiplier) * timeScale;
         if (state.ballX > CANVAS_WIDTH / 2) {
             if (aiCenter < state.ballY - 20) state.aiY += aiSpeed;
             else if (aiCenter > state.ballY + 20) state.aiY -= aiSpeed;
@@ -420,19 +423,11 @@ function Paddles() {
 
             if (state.status !== 'playing') return;
 
-            if (e.key === 'ArrowUp' || e.key === 'w') {
-                inputRef.current.keyUp = true;
-            } else if (e.key === 'ArrowDown' || e.key === 's') {
-                inputRef.current.keyDown = true;
-            }
+            // Movement keys removed per request
         };
 
         const handleKeyUp = (e) => {
-            if (e.key === 'ArrowUp' || e.key === 'w') {
-                inputRef.current.keyUp = false;
-            } else if (e.key === 'ArrowDown' || e.key === 's') {
-                inputRef.current.keyDown = false;
-            }
+            // Movement keys removed per request
         };
 
         const handleMouseMove = (e) => {
@@ -617,7 +612,7 @@ function Paddles() {
                 </div>
 
                 <p className="text-center text-gray-500 text-sm mt-4">
-                    <span className="hidden sm:inline">Arrow Keys or Mouse • Space/ESC to pause</span>
+                    <span className="hidden sm:inline">Use Mouse to move • Space/ESC to pause</span>
                     <span className="sm:hidden">Touch to move paddle</span>
                 </p>
             </div>
