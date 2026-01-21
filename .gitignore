@@ -1,0 +1,9 @@
+/.vercel
+.vercel/project.json
+.vercel/README.txt
+.vercel
+
+/public/assets
+.env
+**/node_modules
+.vercel/project.json
