@@ -20,6 +20,12 @@ class GameAudio {
 
         // Listeners for state changes
         this.listeners = [];
+        this.defaultMuted = true; // Global default
+    }
+
+    reset() {
+        this.muted = this.defaultMuted;
+        this.notify();
     }
 
     async init() {
@@ -88,11 +94,8 @@ class GameAudio {
 
             oscillator.start(now);
             oscillator.stop(now + duration);
-
-            console.log(`[Audio] Tone started at ${now.toFixed(3)}s for ${duration}s`);
         } catch (err) {
             // Silently fail if audio context is suspended
-            console.error('[Audio] playTone error:', err);
         }
     }
 
@@ -129,20 +132,15 @@ class GameAudio {
 
             source.start(now);
             source.stop(now + duration);
-            console.log(`[Audio] Noise started at ${now.toFixed(3)}s for ${duration}s`);
-        } catch (e) {
-            console.error('[Audio] playNoise error:', e);
-        }
+        } catch (e) { }
     }
 
     async resume() {
         if (this.audioContext && this.audioContext.state === 'suspended') {
             try {
-                console.log('[Audio] Resuming context...');
                 await this.audioContext.resume();
-                console.log('[Audio] Context resumed. New state:', this.audioContext.state);
             } catch (err) {
-                console.warn('[Audio] Failed to resume audio context:', err);
+                console.warn('Failed to resume audio context:', err);
             }
         }
     }
@@ -169,18 +167,12 @@ class GameAudio {
         this.lastGlobalPlayTime = now;
 
         // Play based on sound type
-        try {
-            console.log(`[Audio] Playing ${soundName} (State: ${this.audioContext?.state}, Muted: ${this.muted})`);
-
-            if (sound.type === 'noise') {
-                this.playNoise(sound.duration, sound.volume);
-            } else if (sound.arpeggio) {
-                this.playArpeggio(sound.arpeggio, sound.duration);
-            } else {
-                this.playTone(sound.freq, sound.duration, sound.type);
-            }
-        } catch (e) {
-            console.error('[Audio] Play Error:', e);
+        if (sound.type === 'noise') {
+            this.playNoise(sound.duration, sound.volume);
+        } else if (sound.arpeggio) {
+            this.playArpeggio(sound.arpeggio, sound.duration);
+        } else {
+            this.playTone(sound.freq, sound.duration, sound.type);
         }
     }
 

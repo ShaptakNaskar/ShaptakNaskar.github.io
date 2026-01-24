@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Trophy, Crosshair, Zap, Skull } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Trophy, Crosshair, Zap, Skull, ChevronUp, RotateCcw as RotateCcwIcon, RotateCw } from 'lucide-react';
 import gameAudio from '../../utils/audio';
 import LeaderboardModal from '../LeaderboardModal';
 
@@ -396,6 +396,7 @@ function SpaceDefender() {
 
     // Audio subscription
     useEffect(() => {
+        gameAudio.reset();
         const unsubscribe = gameAudio.subscribe((muted) => {
             setAudioEnabled(!muted);
         });
@@ -546,36 +547,58 @@ function SpaceDefender() {
                 </div>
 
                 {/* Mobile Controls */}
-                <div className="sm:hidden mt-6 grid grid-cols-2 gap-4">
-                    <div className="bg-white/5 rounded-xl p-4 h-32 relative touch-none">
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 pointer-events-none">D-Pad</div>
-                        {/* Implementing a simple invisible touch pad for movement */}
-                        <div className="absolute inset-0 z-10"
-                            onTouchStart={(e) => {
-                                // Simple logic: touch top/btm/left/right of box
-                                const r = e.target.getBoundingClientRect();
-                                const t = e.touches[0];
-                                const x = t.clientX - r.left;
-                                const y = t.clientY - r.top;
-                                if (y < r.height / 3) inputsRef.current.up = true;
-                                if (y > r.height * 2 / 3) inputsRef.current.down = true;
-                                if (x < r.width / 3) inputsRef.current.left = true;
-                                if (x > r.width * 2 / 3) inputsRef.current.right = true;
-                            }}
-                            onTouchEnd={() => {
-                                inputsRef.current.up = false;
-                                inputsRef.current.down = false;
-                                inputsRef.current.left = false;
-                                inputsRef.current.right = false;
-                            }}
-                        ></div>
+                {/* Mobile Controls */}
+                <div className="sm:hidden mt-6 flex justify-between gap-4">
+                    {/* D-Pad */}
+                    <div className="grid grid-cols-3 gap-2 w-48 touch-none">
+                        {/* Row 1 */}
+                        <div></div>
+                        <button
+                            className="bg-white/10 rounded-lg p-4 active:bg-primary/40 flex items-center justify-center transition-colors border border-white/5"
+                            onTouchStart={(e) => { e.preventDefault(); inputsRef.current.up = true; }}
+                            onTouchEnd={(e) => { e.preventDefault(); inputsRef.current.up = false; }}
+                        >
+                            <ChevronUp className="text-blue-300" />
+                        </button>
+                        <div></div>
+
+                        {/* Row 2 */}
+                        <button
+                            className="bg-white/10 rounded-lg p-4 active:bg-primary/40 flex items-center justify-center transition-colors border border-white/5"
+                            onTouchStart={(e) => { e.preventDefault(); inputsRef.current.left = true; }}
+                            onTouchEnd={(e) => { e.preventDefault(); inputsRef.current.left = false; }}
+                        >
+                            <RotateCcwIcon className="text-blue-300 transform rotate-45" /> {/* Using rotate icon as placeholder for arrow if needed, but chevron is better. Let's import ChevronLeft/Right/Down */}
+                        </button>
+                        <div className="bg-white/5 rounded-full mx-auto w-2 h-2 self-center"></div>
+                        <button
+                            className="bg-white/10 rounded-lg p-4 active:bg-primary/40 flex items-center justify-center transition-colors border border-white/5"
+                            onTouchStart={(e) => { e.preventDefault(); inputsRef.current.right = true; }}
+                            onTouchEnd={(e) => { e.preventDefault(); inputsRef.current.right = false; }}
+                        >
+                            <RotateCw className="text-blue-300 transform -rotate-45" />
+                        </button>
+
+                        {/* Row 3 */}
+                        <div></div>
+                        <button
+                            className="bg-white/10 rounded-lg p-4 active:bg-primary/40 flex items-center justify-center transition-colors border border-white/5"
+                            onTouchStart={(e) => { e.preventDefault(); inputsRef.current.down = true; }}
+                            onTouchEnd={(e) => { e.preventDefault(); inputsRef.current.down = false; }}
+                        >
+                            <ChevronUp className="text-blue-300 transform rotate-180" />
+                        </button>
+                        <div></div>
                     </div>
+
+                    {/* Fire Button */}
                     <button
-                        className="bg-red-500/20 border border-red-500/50 rounded-xl flex items-center justify-center active:bg-red-500/40 touch-none"
+                        className="flex-1 bg-red-500/20 border-2 border-red-500/50 rounded-2xl flex flex-col items-center justify-center gap-2 active:bg-red-500/40 touch-none active:scale-95 transition-all"
                         onTouchStart={(e) => { e.preventDefault(); inputsRef.current.shoot = true; }}
                         onTouchEnd={(e) => { e.preventDefault(); inputsRef.current.shoot = false; }}
                     >
-                        <Crosshair size={32} className="text-red-400" />
+                        <Crosshair size={48} className="text-red-400" />
+                        <span className="font-bold text-red-200">FIRE</span>
                     </button>
                 </div>
 

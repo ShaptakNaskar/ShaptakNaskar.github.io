@@ -50,6 +50,7 @@ function CosmicLander() {
         status: 'idle',
         message: ''
     });
+    const [canRestart, setCanRestart] = useState(false);
 
     const [audioEnabled, setAudioEnabled] = useState(!gameAudio.isMuted());
     const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -191,7 +192,11 @@ function CosmicLander() {
                                 score: state.score,
                                 message: `Perfect Landing! +${landingScore}`
                             }));
-                            setTimeout(() => setShowLeaderboard(true), 2000);
+                            setCanRestart(false);
+                            setTimeout(() => {
+                                setShowLeaderboard(true);
+                                setCanRestart(true);
+                            }, 2000);
                         } else {
                             state.status = 'crashed';
                             gameAudio.play('gameOver');
@@ -205,7 +210,11 @@ function CosmicLander() {
                                 status: 'crashed',
                                 message: `CRASHED! ${reasons.join(', ')}`
                             }));
-                            setTimeout(() => setShowLeaderboard(true), 2000);
+                            setCanRestart(false);
+                            setTimeout(() => {
+                                setShowLeaderboard(true);
+                                setCanRestart(true);
+                            }, 2000);
                         }
                     }
                 }
@@ -334,6 +343,7 @@ function CosmicLander() {
     }, []);
 
     useEffect(() => {
+        gameAudio.reset();
         const unsubscribe = gameAudio.subscribe((muted) => {
             setAudioEnabled(!muted);
         });
@@ -418,6 +428,7 @@ function CosmicLander() {
         resetGame(true);
         gameStateRef.current.status = 'idle';
         setUiState(prev => ({ ...prev, status: 'idle' }));
+        setCanRestart(true);
 
         lastFrameTimeRef.current = performance.now();
         animationRef.current = requestAnimationFrame(gameLoop);
@@ -504,16 +515,19 @@ function CosmicLander() {
 
                             {uiState.message && <p className="text-lg text-gray-300 mb-6">{uiState.message}</p>}
 
-                            <button
-                                onClick={() => {
-                                    gameAudio.init(); // Force audio context resume
-                                    startGame();
-                                }}
-                                className="flex items-center gap-2 px-8 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 font-bold hover:scale-105 transition-transform"
-                            >
-                                <Play size={20} />
-                                {uiState.status === 'idle' ? 'Start Mission' : uiState.status === 'paused' ? 'Resume' : 'Try Again'}
-                            </button>
+                            {canRestart && (
+                                <button
+                                    onClick={() => {
+                                        gameAudio.init(); // Force audio context resume
+                                        gameAudio.resume();
+                                        startGame();
+                                    }}
+                                    className="flex items-center gap-2 px-8 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 font-bold hover:scale-105 transition-transform animate-fadeIn"
+                                >
+                                    <Play size={20} />
+                                    {uiState.status === 'idle' ? 'Start Mission' : uiState.status === 'paused' ? 'Resume' : 'Try Again'}
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>

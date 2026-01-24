@@ -18,6 +18,7 @@ function WordGuess() {
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const [viewingLeaderboard, setViewingLeaderboard] = useState(false);
     const [score, setScore] = useState(0);
+    const [canRestart, setCanRestart] = useState(true);
 
     // Fetch a 6-letter word
     const fetchWord = useCallback(async () => {
@@ -57,6 +58,7 @@ function WordGuess() {
     };
 
     useEffect(() => {
+        gameAudio.reset();
         startGame();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -81,12 +83,21 @@ function WordGuess() {
             gameAudio.play('win');
             setGameStatus('won');
             gameAudio.play('win');
-            setTimeout(() => setShowLeaderboard(true), 2000);
+            setCanRestart(false);
+            setTimeout(() => {
+                setShowLeaderboard(true);
+                setCanRestart(true);
+            }, 2000);
         } else if (newGuesses.length >= MAX_GUESSES) {
             // Loss
             setGameStatus('lost');
+            setGameStatus('lost');
             gameAudio.play('gameOver');
-            setTimeout(() => setShowLeaderboard(true), 2000);
+            setCanRestart(false);
+            setTimeout(() => {
+                setShowLeaderboard(true);
+                setCanRestart(true);
+            }, 2000);
         } else {
             gameAudio.play('click');
         }
@@ -190,7 +201,8 @@ function WordGuess() {
                     </button>
                     <button
                         onClick={startGame}
-                        className="p-2 rounded-lg bg-white/10 text-gray-400 hover:text-primary transition-colors"
+                        disabled={!canRestart}
+                        className={`p-2 rounded-lg bg-white/10 text-gray-400 hover:text-primary transition-colors ${!canRestart ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <RotateCcw size={20} />
                     </button>

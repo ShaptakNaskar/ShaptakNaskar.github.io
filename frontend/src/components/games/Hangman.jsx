@@ -146,6 +146,7 @@ function Hangman() {
 
     // Audio Subscription
     useEffect(() => {
+        gameAudio.reset();
         const unsubscribe = gameAudio.subscribe((muted) => {
             setAudioEnabled(!muted);
         });
