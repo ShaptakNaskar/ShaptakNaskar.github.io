@@ -121,12 +121,18 @@ class GameAudio {
             filter.connect(gainNode);
             gainNode.connect(this.audioContext.destination);
 
-            gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+            // Envelope
+            const now = this.audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(volume, now + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0, now + duration);
 
-            source.start(this.audioContext.currentTime);
-            source.stop(this.audioContext.currentTime + duration);
-        } catch (e) { }
+            source.start(now);
+            source.stop(now + duration);
+            console.log(`[Audio] Noise started at ${now.toFixed(3)}s for ${duration}s`);
+        } catch (e) {
+            console.error('[Audio] playNoise error:', e);
+        }
     }
 
     async resume() {
