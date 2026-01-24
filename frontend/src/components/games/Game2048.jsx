@@ -182,6 +182,13 @@ function Game2048() {
         setTouchStart(null);
     };
 
+    useEffect(() => {
+        const unsubscribe = gameAudio.subscribe((muted) => {
+            setAudioEnabled(!muted);
+        });
+        return unsubscribe;
+    }, []);
+
     // Add event listener for keyboard
     React.useEffect(() => {
         window.addEventListener('keydown', handleKeyDown);
@@ -190,6 +197,7 @@ function Game2048() {
 
     const startGame = () => {
         gameAudio.init();
+        gameAudio.resume();
         setGrid(addRandomTile(addRandomTile(createEmptyGrid())));
         setScore(0);
         setBestTile(2);
@@ -198,11 +206,9 @@ function Game2048() {
     };
 
     const toggleAudio = () => {
-        const enabled = !audioEnabled;
-        setAudioEnabled(enabled);
-        gameAudio.setMuted(!enabled);
-        gameAudio.init();
-        if (enabled) gameAudio.play('click');
+        gameAudio.toggle();
+        gameAudio.resume();
+        if (!gameAudio.isMuted()) gameAudio.play('click');
     };
 
     const getAchievement = () => `Best tile: ${bestTile}`;

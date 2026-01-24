@@ -338,6 +338,7 @@ function Paddles() {
 
     const startGame = useCallback(() => {
         gameAudio.init();
+        gameAudio.resume();
         const state = gameStateRef.current;
         state.playerScore = 0;
         state.aiScore = 0;
@@ -384,6 +385,13 @@ function Paddles() {
             pauseGame(); // Resume
         }
     }, [startGame, pauseGame]);
+
+    useEffect(() => {
+        const unsubscribe = gameAudio.subscribe((muted) => {
+            setAudioEnabled(!muted);
+        });
+        return unsubscribe;
+    }, []);
 
     // Cleanup
     useEffect(() => {
@@ -482,11 +490,9 @@ function Paddles() {
     }, [scale, pauseGame]);
 
     const toggleAudio = () => {
-        const enabled = !audioEnabled;
-        setAudioEnabled(enabled);
-        gameAudio.setMuted(!enabled);
-        gameAudio.init();
-        if (enabled) gameAudio.play('click');
+        gameAudio.toggle();
+        gameAudio.resume();
+        if (!gameAudio.isMuted()) gameAudio.play('click');
     };
 
     const getAchievement = () => {

@@ -47,6 +47,8 @@ function WordGuess() {
     }, []);
 
     const startGame = () => {
+        gameAudio.init();
+        gameAudio.resume();
         setGuesses([]);
         setCurrentGuess('');
         setScore(0);
@@ -143,11 +145,9 @@ function WordGuess() {
     };
 
     const toggleAudio = () => {
-        const enabled = !audioEnabled;
-        setAudioEnabled(enabled);
-        gameAudio.setMuted(!enabled);
-        gameAudio.init();
-        if (enabled) gameAudio.play('click');
+        gameAudio.toggle();
+        gameAudio.resume();
+        if (!gameAudio.isMuted()) gameAudio.play('click');
     };
 
     const getAchievement = () => {

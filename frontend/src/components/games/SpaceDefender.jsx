@@ -394,6 +394,14 @@ function SpaceDefender() {
         return () => window.removeEventListener('resize', updateSize);
     }, []);
 
+    // Audio subscription
+    useEffect(() => {
+        const unsubscribe = gameAudio.subscribe((muted) => {
+            setAudioEnabled(!muted);
+        });
+        return unsubscribe;
+    }, []);
+
     // Inputs
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -445,6 +453,7 @@ function SpaceDefender() {
 
     const handleStart = () => {
         gameAudio.init();
+        gameAudio.resume();
         if (gameStateRef.current.status !== 'playing') {
             if (gameStateRef.current.status === 'gameOver' || gameStateRef.current.status === 'idle') {
                 resetGame();
@@ -474,11 +483,9 @@ function SpaceDefender() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => {
-                            const enabled = !audioEnabled;
-                            setAudioEnabled(enabled);
-                            gameAudio.setMuted(!enabled); // Sync global state
-                            gameAudio.init();
-                            if (enabled) gameAudio.play('click');
+                            gameAudio.toggle();
+                            gameAudio.resume();
+                            if (!gameAudio.isMuted()) gameAudio.play('click');
                         }}
                         className={`p-2 rounded-lg transition-colors ${audioEnabled ? 'bg-primary/20 text-primary' : 'bg-white/10 text-gray-400'}`}
                     >

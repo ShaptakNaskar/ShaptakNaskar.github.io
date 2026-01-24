@@ -102,6 +102,7 @@ function Hangman() {
 
     const startGame = () => {
         gameAudio.init();
+        gameAudio.resume();
         setScore(0);
         setShowLeaderboard(false);
         fetchWord();
@@ -143,6 +144,14 @@ function Hangman() {
         }
     }, [gameStatus, guessedLetters, word, wrongGuesses, maxWrong, config.multiplier]);
 
+    // Audio Subscription
+    useEffect(() => {
+        const unsubscribe = gameAudio.subscribe((muted) => {
+            setAudioEnabled(!muted);
+        });
+        return unsubscribe;
+    }, []);
+
     // Keyboard input
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -157,11 +166,9 @@ function Hangman() {
     }, [gameStatus, guessLetter]);
 
     const toggleAudio = () => {
-        const enabled = !audioEnabled;
-        setAudioEnabled(enabled);
-        gameAudio.setMuted(!enabled);
-        gameAudio.init();
-        if (enabled) gameAudio.play('click');
+        gameAudio.toggle();
+        gameAudio.resume();
+        if (!gameAudio.isMuted()) gameAudio.play('click');
     };
 
     const getAchievement = () => {

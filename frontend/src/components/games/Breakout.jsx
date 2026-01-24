@@ -496,6 +496,7 @@ function Breakout() {
 
     const startGame = useCallback(() => {
         gameAudio.init();
+        gameAudio.resume();
         const state = gameStateRef.current;
         state.lives = 3;
         state.score = 0;
@@ -539,6 +540,13 @@ function Breakout() {
             pauseGame();
         }
     }, [startGame, pauseGame]);
+
+    useEffect(() => {
+        const unsubscribe = gameAudio.subscribe((muted) => {
+            setAudioEnabled(!muted);
+        });
+        return unsubscribe;
+    }, []);
 
     useEffect(() => {
         return () => {
@@ -639,11 +647,9 @@ function Breakout() {
     }, [scale, pauseGame]);
 
     const toggleAudio = () => {
-        const enabled = !audioEnabled;
-        setAudioEnabled(enabled);
-        gameAudio.setMuted(!enabled);
-        gameAudio.init();
-        if (enabled) gameAudio.play('click');
+        gameAudio.toggle();
+        gameAudio.resume();
+        if (!gameAudio.isMuted()) gameAudio.play('click');
     };
 
     const getAchievement = () => `Reached Level ${uiState.level + 1}`;

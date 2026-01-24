@@ -333,6 +333,13 @@ function CosmicLander() {
         return () => window.removeEventListener('resize', updateSize);
     }, []);
 
+    useEffect(() => {
+        const unsubscribe = gameAudio.subscribe((muted) => {
+            setAudioEnabled(!muted);
+        });
+        return unsubscribe;
+    }, []);
+
     // Input handling
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -386,6 +393,7 @@ function CosmicLander() {
 
     const startGame = () => {
         gameAudio.init();
+        gameAudio.resume();
         if (gameStateRef.current.status === 'idling' || gameStateRef.current.status === 'landed' || gameStateRef.current.status === 'crashed' || gameStateRef.current.status === 'ended') {
             resetGame(gameStateRef.current.status === 'crashed' || gameStateRef.current.status === 'ended' ? true : false); // Only full reset if crashed? No, cumulative? Let's restart level
             // If landed, we keep fuel and score but easy reset for now
@@ -437,11 +445,9 @@ function CosmicLander() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => {
-                            const enabled = !audioEnabled;
-                            setAudioEnabled(enabled);
-                            gameAudio.setMuted(!enabled); // Sync global state
-                            gameAudio.init();
-                            if (enabled) gameAudio.play('click');
+                            gameAudio.toggle();
+                            gameAudio.resume();
+                            if (!gameAudio.isMuted()) gameAudio.play('click');
                         }}
                         className={`p-2 rounded-lg transition-colors ${audioEnabled ? 'bg-primary/20 text-primary' : 'bg-white/10 text-gray-400'}`}
                     >

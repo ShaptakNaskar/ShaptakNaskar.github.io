@@ -17,6 +17,9 @@ class GameAudio {
         this.globalThrottleMs = 16; // ~1 frame at 60fps
 
         this.noiseBuffer = null;
+
+        // Listeners for state changes
+        this.listeners = [];
     }
 
     async init() {
@@ -46,17 +49,17 @@ class GameAudio {
     async loadSounds() {
         // Define sound configurations (not functions to avoid closure overhead)
         this.sounds = {
-            bounce: { freq: 440, duration: 0.05, type: 'square' },
-            score: { freq: 880, duration: 0.1, type: 'sine' },
-            levelUp: { arpeggio: [523, 659, 784], duration: 0.15 },
-            gameOver: { freq: 220, duration: 0.3, type: 'sawtooth' },
-            click: { freq: 600, duration: 0.03, type: 'sine' },
-            win: { arpeggio: [523, 659, 784, 1047], duration: 0.2 },
-            wrong: { freq: 150, duration: 0.15, type: 'sawtooth' },
-            correct: { freq: 660, duration: 0.08, type: 'sine' },
-            merge: { freq: 520, duration: 0.06, type: 'triangle' },
-            thrust: { type: 'noise', duration: 0.1, volume: 0.3 },
-            laser: { freq: 880, duration: 0.1, type: 'sawtooth', slide: true },
+            bounce: { freq: 440, duration: 0.15, type: 'square' },
+            score: { freq: 880, duration: 0.2, type: 'sine' },
+            levelUp: { arpeggio: [523, 659, 784], duration: 0.2 },
+            gameOver: { freq: 220, duration: 0.5, type: 'sawtooth' },
+            click: { freq: 600, duration: 0.1, type: 'sine' },
+            win: { arpeggio: [523, 659, 784, 1047], duration: 0.3 },
+            wrong: { freq: 150, duration: 0.3, type: 'sawtooth' },
+            correct: { freq: 660, duration: 0.2, type: 'sine' },
+            merge: { freq: 520, duration: 0.15, type: 'triangle' },
+            thrust: { type: 'noise', duration: 0.2, volume: 0.3 },
+            laser: { freq: 880, duration: 0.2, type: 'sawtooth', slide: true },
         };
     }
 
@@ -73,17 +76,23 @@ class GameAudio {
             oscillator.type = type;
             oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
 
-            if (soundType === 'laser') {
+            if (this.sounds.laser && frequency === this.sounds.laser.freq) {
                 oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + duration);
             }
 
-            gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+            // Envelope: Attack (pop-free) -> Decay
+            const now = this.audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.5, now + 0.01); // Quick attack
+            gainNode.gain.linearRampToValueAtTime(0, now + duration); // Linear fade out
 
-            oscillator.start(this.audioContext.currentTime);
-            oscillator.stop(this.audioContext.currentTime + duration);
+            oscillator.start(now);
+            oscillator.stop(now + duration);
+
+            console.log(`[Audio] Tone started at ${now.toFixed(3)}s for ${duration}s`);
         } catch (err) {
             // Silently fail if audio context is suspended
+            console.error('[Audio] playTone error:', err);
         }
     }
 
@@ -120,6 +129,18 @@ class GameAudio {
         } catch (e) { }
     }
 
+    async resume() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            try {
+                console.log('[Audio] Resuming context...');
+                await this.audioContext.resume();
+                console.log('[Audio] Context resumed. New state:', this.audioContext.state);
+            } catch (err) {
+                console.warn('[Audio] Failed to resume audio context:', err);
+            }
+        }
+    }
+
     play(soundName) {
         if (this.muted) return;
 
@@ -141,38 +162,52 @@ class GameAudio {
         this.lastPlayTime[soundName] = now;
         this.lastGlobalPlayTime = now;
 
-        // Resume audio context if suspended
-        if (this.audioContext?.state === 'suspended') {
-            this.audioContext.resume();
-        }
-
         // Play based on sound type
-        if (sound.type === 'noise') {
-            this.playNoise(sound.duration, sound.volume);
-        } else if (sound.arpeggio) {
-            this.playArpeggio(sound.arpeggio, sound.duration);
-        } else {
-            this.playTone(sound.freq, sound.duration, sound.type);
+        try {
+            console.log(`[Audio] Playing ${soundName} (State: ${this.audioContext?.state}, Muted: ${this.muted})`);
+
+            if (sound.type === 'noise') {
+                this.playNoise(sound.duration, sound.volume);
+            } else if (sound.arpeggio) {
+                this.playArpeggio(sound.arpeggio, sound.duration);
+            } else {
+                this.playTone(sound.freq, sound.duration, sound.type);
+            }
+        } catch (e) {
+            console.error('[Audio] Play Error:', e);
         }
     }
 
     toggle() {
         this.muted = !this.muted;
-        if (!this.muted && this.audioContext?.state === 'suspended') {
-            this.audioContext.resume();
+        if (!this.muted) {
+            this.resume();
         }
+        this.notify();
         return !this.muted;
     }
 
     setMuted(value) {
         this.muted = value;
-        if (!this.muted && this.audioContext?.state === 'suspended') {
-            this.audioContext.resume();
+        if (!this.muted) {
+            this.resume();
         }
+        this.notify();
     }
 
     isMuted() {
         return this.muted;
+    }
+
+    subscribe(callback) {
+        this.listeners.push(callback);
+        return () => {
+            this.listeners = this.listeners.filter(cb => cb !== callback);
+        };
+    }
+
+    notify() {
+        this.listeners.forEach(cb => cb(this.muted));
     }
 }
 
