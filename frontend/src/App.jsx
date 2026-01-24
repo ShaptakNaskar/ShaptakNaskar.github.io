@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Routes, Route, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 import Home from './components/Home';
 import BlogPost from './components/BlogPost';
 import ScrollToHashElement from './components/ScrollToHashElement';
@@ -234,6 +235,7 @@ function App() {
           </AnimatePresence>
         </main>
       </div>
+      <Analytics />
     </div>
   );
 }
