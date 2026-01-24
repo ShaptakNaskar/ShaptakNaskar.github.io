@@ -14,7 +14,7 @@ function WordGuess() {
     const [currentGuess, setCurrentGuess] = useState('');
     const [gameStatus, setGameStatus] = useState('loading'); // loading, playing, won, lost
     const [message, setMessage] = useState('');
-    const [audioEnabled, setAudioEnabled] = useState(false);
+    const [audioEnabled, setAudioEnabled] = useState(!gameAudio.isMuted());
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const [viewingLeaderboard, setViewingLeaderboard] = useState(false);
     const [score, setScore] = useState(0);
@@ -77,12 +77,14 @@ function WordGuess() {
             setScore(finalScore);
             setGameStatus('won');
             gameAudio.play('win');
-            setShowLeaderboard(true);
+            setGameStatus('won');
+            gameAudio.play('win');
+            setTimeout(() => setShowLeaderboard(true), 2000);
         } else if (newGuesses.length >= MAX_GUESSES) {
             // Loss
             setGameStatus('lost');
             gameAudio.play('gameOver');
-            setShowLeaderboard(true);
+            setTimeout(() => setShowLeaderboard(true), 2000);
         } else {
             gameAudio.play('click');
         }
@@ -141,9 +143,10 @@ function WordGuess() {
     };
 
     const toggleAudio = () => {
-        gameAudio.init();
-        const enabled = gameAudio.toggle();
+        const enabled = !audioEnabled;
         setAudioEnabled(enabled);
+        gameAudio.setMuted(!enabled);
+        gameAudio.init();
         if (enabled) gameAudio.play('click');
     };
 

@@ -4,7 +4,7 @@ const gameScoreSchema = new mongoose.Schema({
     game: {
         type: String,
         required: true,
-        enum: ['paddles', 'wordguess', '2048', 'breakout'],
+        enum: ['paddles', 'wordguess', '2048', 'breakout', 'cosmic-lander', 'space-defender'],
         index: true
     },
     playerName: {

@@ -29,12 +29,18 @@ function LeaderboardModal({ isOpen, onClose, game, currentScore, onSubmitScore }
         try {
             const res = await fetch(`/api/leaderboard/${game}`);
             const data = await res.json();
-            setLeaderboard(data);
 
-            // Check if current score qualifies
-            if (currentScore !== undefined && currentScore !== null) {
-                const qualifiesForTop5 = data.length < 5 || currentScore > data[data.length - 1]?.score;
-                setQualifies(qualifiesForTop5);
+            if (Array.isArray(data)) {
+                setLeaderboard(data);
+
+                // Check if current score qualifies
+                if (currentScore !== undefined && currentScore !== null) {
+                    const qualifiesForTop5 = data.length < 5 || currentScore > data[data.length - 1]?.score;
+                    setQualifies(qualifiesForTop5);
+                }
+            } else {
+                setLeaderboard([]);
+                console.error('Leaderboard data is not an array:', data);
             }
         } catch (err) {
             console.error('Failed to fetch leaderboard:', err);
@@ -78,7 +84,9 @@ function LeaderboardModal({ isOpen, onClose, game, currentScore, onSubmitScore }
         paddles: 'Paddles',
         wordguess: 'Word Guess',
         '2048': '2048',
-        breakout: 'Breakout'
+        breakout: 'Breakout',
+        'cosmic-lander': 'Cosmic Lander',
+        'space-defender': 'Space Defender'
     };
 
     return (

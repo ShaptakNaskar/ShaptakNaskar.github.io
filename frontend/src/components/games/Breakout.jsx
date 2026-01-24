@@ -168,7 +168,7 @@ function Breakout() {
         status: 'idle',
         fpsMode: 'high'
     });
-    const [audioEnabled, setAudioEnabled] = useState(false);
+    const [audioEnabled, setAudioEnabled] = useState(!gameAudio.isMuted());
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const [viewingLeaderboard, setViewingLeaderboard] = useState(false);
     const [canvasSize, setCanvasSize] = useState({ width: CANVAS_WIDTH, height: CANVAS_HEIGHT });
@@ -639,9 +639,10 @@ function Breakout() {
     }, [scale, pauseGame]);
 
     const toggleAudio = () => {
-        gameAudio.init();
-        const enabled = gameAudio.toggle();
+        const enabled = !audioEnabled;
         setAudioEnabled(enabled);
+        gameAudio.setMuted(!enabled);
+        gameAudio.init();
         if (enabled) gameAudio.play('click');
     };
 

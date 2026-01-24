@@ -77,7 +77,7 @@ function Game2048() {
     const [score, setScore] = useState(0);
     const [bestTile, setBestTile] = useState(2);
     const [gameStatus, setGameStatus] = useState('playing');
-    const [audioEnabled, setAudioEnabled] = useState(false);
+    const [audioEnabled, setAudioEnabled] = useState(!gameAudio.isMuted());
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const [viewingLeaderboard, setViewingLeaderboard] = useState(false);
     const [hasWon, setHasWon] = useState(false);
@@ -198,9 +198,10 @@ function Game2048() {
     };
 
     const toggleAudio = () => {
-        gameAudio.init();
-        const enabled = gameAudio.toggle();
+        const enabled = !audioEnabled;
         setAudioEnabled(enabled);
+        gameAudio.setMuted(!enabled);
+        gameAudio.init();
         if (enabled) gameAudio.play('click');
     };
 

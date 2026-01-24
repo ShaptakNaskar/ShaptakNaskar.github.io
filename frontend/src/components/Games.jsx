@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Volume2, VolumeX, Trophy, Disc, FileQuestion, Grid3X3, Layers } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX, Trophy, Disc, FileQuestion, Grid3X3, Layers, Rocket, Crosshair } from 'lucide-react';
 import gameAudio from '../utils/audio';
 import LeaderboardModal from './LeaderboardModal';
 
@@ -37,6 +37,22 @@ const games = [
         gradient: 'from-green-500 to-teal-600',
         Icon: Layers,
         path: '/games/breakout'
+    },
+    {
+        id: 'cosmic-lander',
+        name: 'Cosmic Lander',
+        description: 'Navigate gravity and land safely',
+        gradient: 'from-purple-500 to-indigo-600',
+        Icon: Rocket,
+        path: '/games/cosmic-lander'
+    },
+    {
+        id: 'space-defender',
+        name: 'Space Defender',
+        description: 'Defend the cosmos from alien waves',
+        gradient: 'from-blue-600 to-cyan-500',
+        Icon: Crosshair,
+        path: '/games/space-defender'
     }
 ];
 

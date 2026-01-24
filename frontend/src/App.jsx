@@ -10,6 +10,8 @@ import Paddles from './components/games/Paddles';
 import WordGuess from './components/games/WordGuess';
 import Game2048 from './components/games/Game2048';
 import Breakout from './components/games/Breakout';
+import CosmicLander from './components/games/CosmicLander';
+import SpaceDefender from './components/games/SpaceDefender';
 
 function App() {
   const location = useLocation();
@@ -199,6 +201,32 @@ function App() {
                     transition={{ duration: 0.3 }}
                   >
                     <Breakout />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="/games/cosmic-lander"
+                element={
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <CosmicLander />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="/games/space-defender"
+                element={
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SpaceDefender />
                   </motion.div>
                 }
               />

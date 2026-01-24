@@ -15,6 +15,8 @@ class GameAudio {
         // Global throttle to prevent too many distinct sounds per frame
         this.lastGlobalPlayTime = 0;
         this.globalThrottleMs = 16; // ~1 frame at 60fps
+
+        this.noiseBuffer = null;
     }
 
     async init() {
@@ -22,11 +24,23 @@ class GameAudio {
 
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.createNoiseBuffer();
             await this.loadSounds();
             this.loaded = true;
         } catch (err) {
             console.warn('Audio not available:', err);
         }
+    }
+
+    createNoiseBuffer() {
+        if (!this.audioContext) return;
+        const bufferSize = this.audioContext.sampleRate * 2; // 2 seconds of noise
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        this.noiseBuffer = buffer;
     }
 
     async loadSounds() {
@@ -41,6 +55,8 @@ class GameAudio {
             wrong: { freq: 150, duration: 0.15, type: 'sawtooth' },
             correct: { freq: 660, duration: 0.08, type: 'sine' },
             merge: { freq: 520, duration: 0.06, type: 'triangle' },
+            thrust: { type: 'noise', duration: 0.1, volume: 0.3 },
+            laser: { freq: 880, duration: 0.1, type: 'sawtooth', slide: true },
         };
     }
 
@@ -56,6 +72,10 @@ class GameAudio {
 
             oscillator.type = type;
             oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+
+            if (soundType === 'laser') {
+                oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + duration);
+            }
 
             gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
@@ -73,6 +93,31 @@ class GameAudio {
         frequencies.forEach((freq, i) => {
             setTimeout(() => this.playTone(freq, noteDuration, 'sine'), i * noteDuration * 500);
         });
+    }
+
+    playNoise(duration, volume = 0.5) {
+        if (this.muted || !this.audioContext || !this.noiseBuffer) return;
+
+        try {
+            const source = this.audioContext.createBufferSource();
+            source.buffer = this.noiseBuffer;
+            const gainNode = this.audioContext.createGain();
+
+            // Bandpass filter for rocket sound
+            const filter = this.audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 1000;
+
+            source.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+
+            source.start(this.audioContext.currentTime);
+            source.stop(this.audioContext.currentTime + duration);
+        } catch (e) { }
     }
 
     play(soundName) {
@@ -102,7 +147,9 @@ class GameAudio {
         }
 
         // Play based on sound type
-        if (sound.arpeggio) {
+        if (sound.type === 'noise') {
+            this.playNoise(sound.duration, sound.volume);
+        } else if (sound.arpeggio) {
             this.playArpeggio(sound.arpeggio, sound.duration);
         } else {
             this.playTone(sound.freq, sound.duration, sound.type);
