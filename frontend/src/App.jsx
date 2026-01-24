@@ -6,6 +6,7 @@ import { Analytics } from '@vercel/analytics/react';
 import Home from './components/Home';
 import BlogPost from './components/BlogPost';
 import ScrollToHashElement from './components/ScrollToHashElement';
+import ScrollToTopButton from './components/ScrollToTopButton';
 import Games from './components/Games';
 import Paddles from './components/games/Paddles';
 import WordGuess from './components/games/WordGuess';
@@ -35,6 +36,7 @@ function App() {
   return (
     <div className="min-h-screen transition-colors duration-300 relative overflow-hidden font-sans">
       <ScrollToHashElement />
+      <ScrollToTopButton />
       {/* Background with abstract blobs - Consistent across pages */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className={`absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/10 dark:bg-primary/20 rounded-full blur-[120px] ${isGameRoute ? '' : 'animate-pulse'}`} />
