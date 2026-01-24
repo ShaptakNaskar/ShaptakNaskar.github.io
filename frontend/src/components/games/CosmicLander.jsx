@@ -343,10 +343,10 @@ function CosmicLander() {
     }, []);
 
     useEffect(() => {
-        gameAudio.reset();
         const unsubscribe = gameAudio.subscribe((muted) => {
             setAudioEnabled(!muted);
         });
+        gameAudio.reset();
         return unsubscribe;
     }, []);
 
@@ -532,8 +532,7 @@ function CosmicLander() {
                     )}
                 </div>
 
-                {/* Mobile Controls */}
-                <div className="sm:hidden mt-6 flex justify-between gap-4">
+                <div className="sm:hidden mt-6 flex justify-between gap-4 select-none">
                     <button
                         className="flex-1 py-4 bg-white/10 rounded-xl active:bg-white/20 flex flex-col items-center justify-center gap-1 touch-none"
                         onTouchStart={(e) => { e.preventDefault(); inputsRef.current.left = true; }}

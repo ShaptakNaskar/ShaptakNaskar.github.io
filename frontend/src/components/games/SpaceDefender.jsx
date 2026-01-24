@@ -396,10 +396,10 @@ function SpaceDefender() {
 
     // Audio subscription
     useEffect(() => {
-        gameAudio.reset();
         const unsubscribe = gameAudio.subscribe((muted) => {
             setAudioEnabled(!muted);
         });
+        gameAudio.reset();
         return unsubscribe;
     }, []);
 
@@ -548,7 +548,7 @@ function SpaceDefender() {
 
                 {/* Mobile Controls */}
                 {/* Mobile Controls */}
-                <div className="sm:hidden mt-6 flex justify-between gap-4">
+                <div className="sm:hidden mt-6 flex justify-between gap-4 select-none">
                     {/* D-Pad */}
                     <div className="grid grid-cols-3 gap-2 w-48 touch-none">
                         {/* Row 1 */}

@@ -384,10 +384,10 @@ function Pong() {
     }, [startGame, pauseGame]);
 
     useEffect(() => {
-        gameAudio.reset();
         const unsubscribe = gameAudio.subscribe((muted) => {
             setAudioEnabled(!muted);
         });
+        gameAudio.reset();
         return unsubscribe;
     }, []);
 

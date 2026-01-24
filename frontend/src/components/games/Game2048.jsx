@@ -183,10 +183,10 @@ function Game2048() {
     };
 
     useEffect(() => {
-        gameAudio.reset();
         const unsubscribe = gameAudio.subscribe((muted) => {
             setAudioEnabled(!muted);
         });
+        gameAudio.reset();
         return unsubscribe;
     }, []);
 

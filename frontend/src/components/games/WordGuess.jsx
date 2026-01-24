@@ -58,8 +58,22 @@ function WordGuess() {
     };
 
     useEffect(() => {
+        // Since WordGuess doesn't have an explicit audio subscription effect block, I need to check where it subscribes.
+        // Wait, I see lines 57-64 in step 522 were just reset and startGame.
+        // I need to check if WordGuess has a subscription.
+        // Looking at file content from step 564. It does NOT have a useEffect subscription!
+        // It initializes `audioEnabled` from `gameAudio.isMuted()` in line 17.
+        // And `toggleAudio` (line 158) relies on local state update? No, it calls `gameAudio.toggle()`.
+        // But if `reset()` changes it externally, `audioEnabled` won't update?
+        // Ah, `WordGuess` controls update via `audioEnabled` state.
+        // I must add a subscription here.
+
+        const unsubscribe = gameAudio.subscribe((muted) => {
+            setAudioEnabled(!muted);
+        });
         gameAudio.reset();
         startGame();
+        return unsubscribe;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
