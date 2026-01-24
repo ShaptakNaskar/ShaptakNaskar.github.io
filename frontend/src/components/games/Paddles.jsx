@@ -91,7 +91,7 @@ function Paddles() {
         const updateSize = () => {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
-                const maxWidth = Math.min(window.innerWidth - 48, CANVAS_WIDTH);
+                const maxWidth = Math.min(window.innerWidth - 96, CANVAS_WIDTH);
                 const scale = maxWidth / CANVAS_WIDTH;
                 setCanvasSize({ width: maxWidth, height: CANVAS_HEIGHT * scale });
             }, 100);
