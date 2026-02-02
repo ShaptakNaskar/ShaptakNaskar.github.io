@@ -441,10 +441,14 @@ function Breakout() {
                         state.ballY - BALL_RADIUS < brick.y + brick.height
                     ) {
                         brick.hits--;
+                        // Award score on every hit
+                        state.score += 10 * (state.level + 1);
+                        // Update UI immediately
+                        setUiState(prev => ({ ...prev, score: state.score }));
+
                         if (brick.hits <= 0) {
                             brick.active = false;
                             state.brickCount--;
-                            state.score += 10 * (state.level + 1);
                             gameAudio.play('score');
                             clearBrick(brick);
                         } else {

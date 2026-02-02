@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RotateCcw, Volume2, VolumeX, Trophy } from 'lucide-react';
 import gameAudio from '../../utils/audio';
@@ -191,7 +191,7 @@ function Game2048() {
     }, []);
 
     // Add event listener for keyboard
-    React.useEffect(() => {
+    useEffect(() => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleKeyDown]);
