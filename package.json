@@ -4,7 +4,7 @@
   "description": "Shaptak Naskar's portfolio website",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
+    "dev": "cd frontend && npm install && npm run build && cd .. && nodemon backend/server.js",
     "build": "cd frontend && npm install && npm run build"
   },
   "dependencies": {

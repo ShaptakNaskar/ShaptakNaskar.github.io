@@ -83,6 +83,38 @@ const CyberpunkLoadingScreen = ({ status }) => (
     </div>
 );
 
+const CyberpunkLocationPrompt = ({ onAccept, onDecline }) => (
+    <div className="absolute inset-0 z-[100] bg-gray-950/90 text-cyan-400 flex flex-col items-center justify-center font-mono overflow-hidden px-4 text-center backdrop-blur-sm">
+        <div className="absolute inset-0 cyberpunk-scanlines mix-blend-screen opacity-50 pointer-events-none"></div>
+        <div className="relative z-10 max-w-lg bg-gray-900 border border-cyan-500 p-8 shadow-[0_0_30px_rgba(0,229,255,0.15)] clip-path-cyberpunk-tl">
+            <div className="flex justify-center mb-6 text-cyan-400">
+                <MapPin size={48} className="animate-pulse" />
+            </div>
+            <h2 className="text-2xl font-black text-white tracking-widest uppercase mb-4 text-shadow-glow">Location Uplink Required</h2>
+            <p className="text-sm text-cyan-100 mb-6 tracking-wide leading-relaxed">
+                To calibrate atmospheric sensors for your immediate sector, interface access to your spatial coordinates is needed.
+            </p>
+            <div className="text-xs text-yellow-500 mb-8 border-l-2 border-yellow-500 pl-3 text-left bg-yellow-500/10 p-2">
+                <span className="font-bold">// PRIVACY_PROTOCOL:</span> Coordinates are processed locally and wiped post-uplink. No traces left on the grid.
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                    onClick={onAccept}
+                    className="px-6 py-3 bg-cyan-950/80 border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-gray-950 transition-all font-bold tracking-widest clip-path-cyberpunk"
+                >
+                    INITIATE UPLINK
+                </button>
+                <button
+                    onClick={onDecline}
+                    className="px-6 py-3 bg-gray-900 border border-gray-600 text-gray-500 hover:border-red-500 hover:text-red-500 transition-all font-bold tracking-widest clip-path-cyberpunk"
+                >
+                    STAY OFFLINE
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
 const AnimatedBackground = ({ weatherCode, isDay }) => {
     // Determine effect based on code
     const isRain = [61, 63, 65, 80, 81, 82, 95, 96, 99].includes(weatherCode);
@@ -175,17 +207,11 @@ const CyberpunkWeather = () => {
             setData(fetchedData);
             setLocation({ lat, lon, name: locName.split(',')[0].toUpperCase(), country: countryCode || "--" });
             setError(null);
-
-            if (bootPhase === 'connecting') {
-                setTimeout(() => setBootPhase('loaded'), 1500);
-            }
         } catch (err) {
             setError("ERR_CONNECTION_REFUSED // SECURITY FIREWALL DETECTED");
         } finally {
             setSyncing(false);
-            if (bootPhase === 'connecting') {
-                setTimeout(() => setBootPhase('loaded'), 1500);
-            }
+            setTimeout(() => setBootPhase(prev => prev === 'connecting' ? 'loaded' : prev), 1500);
         }
     };
 
@@ -252,7 +278,23 @@ const CyberpunkWeather = () => {
     };
 
     useEffect(() => {
-        requestLocation();
+        const checkPerms = async () => {
+            if (navigator.permissions && navigator.permissions.query) {
+                try {
+                    const result = await navigator.permissions.query({ name: 'geolocation' });
+                    if (result.state === 'prompt') {
+                        setBootPhase('awaiting_user');
+                    } else {
+                        requestLocation();
+                    }
+                } catch (e) {
+                    setBootPhase('awaiting_user');
+                }
+            } else {
+                setBootPhase('awaiting_user');
+            }
+        };
+        checkPerms();
     }, []);
 
     useEffect(() => {
@@ -266,6 +308,13 @@ const CyberpunkWeather = () => {
     const sUnit = unitMode === 'metric' ? 'km/h' : 'mph';
     const pUnit = unitMode === 'metric' ? 'hPa' : 'inHg';
     const dUnit = unitMode === 'metric' ? 'km' : 'mi';
+
+    if (bootPhase === 'awaiting_user') {
+        return <CyberpunkLocationPrompt onAccept={requestLocation} onDecline={() => {
+            setBootPhase('connecting');
+            loadData(location.lat, location.lon, "NIGHT CITY", "JP", unitMode);
+        }} />;
+    }
 
     if (bootPhase !== 'complete') {
         return <CyberpunkLoadingScreen status={bootPhase} />;
