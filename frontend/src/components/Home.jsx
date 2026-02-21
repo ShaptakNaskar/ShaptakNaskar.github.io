@@ -1,6 +1,7 @@
 import React from 'react';
 import Terminal from './Terminal';
 import ProjectGrid from './ProjectGrid';
+import WebAppGrid from './WebAppGrid';
 import BlogList from './BlogList';
 import MilestonePopup from './MilestonePopup';
 import { motion } from 'framer-motion';
@@ -50,6 +51,19 @@ function Home() {
                     />
                 </div>
                 <Terminal />
+            </section>
+
+            {/* Web Apps Section */}
+            <section id="webapps">
+                <motion.h2
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    className="text-3xl font-bold mb-12 text-center"
+                >
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-purple-600 dark:from-primary dark:to-white">Featured Web Apps</span>
+                </motion.h2>
+                <WebAppGrid />
             </section>
 
             {/* Projects Section */}

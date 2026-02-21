@@ -64,6 +64,33 @@ app.get('/api/projects', async (req, res) => { // Made async just in case
     });
 });
 
+app.get('/api/webapps', async (req, res) => {
+  const webapps = [];
+  const csvPath = path.join(__dirname, 'webapps.csv');
+
+  if (!fs.existsSync(csvPath)) {
+    return res.status(404).json({ error: 'Web Apps CSV not found' });
+  }
+
+  fs.createReadStream(csvPath)
+    .pipe(csv())
+    .on('data', (row) => {
+      webapps.push({
+        AppName: row.AppName || '',
+        AppSummary: row.AppSummary || '',
+        AppImageLink: row.AppImageLink || 'https://via.placeholder.com/400x300?text=WebApp',
+        AppLink: row.AppLink || '#'
+      });
+    })
+    .on('end', () => {
+      res.json(webapps);
+    })
+    .on('error', (err) => {
+      console.error('Error reading Web Apps CSV:', err);
+      res.status(500).json({ error: 'Failed to read web apps' });
+    });
+});
+
 // API endpoint to fetch and increment visitor count
 const PortfolioHit = require('./models/PortfolioHit');
 
@@ -293,6 +320,34 @@ app.get('/api/pfp', (req, res) => {
   fileStream.on('error', (err) => {
     console.error('Error streaming profile picture:', err);
     res.status(500).json({ error: 'Failed to retrieve profile picture' });
+  });
+
+  fileStream.pipe(res);
+});
+
+// WebApp Images endpoint
+app.get('/api/webapp_img/:filename', (req, res) => {
+  const { filename } = req.params;
+  const imgPath = path.join(__dirname, 'webapp_img', filename);
+
+  if (!fs.existsSync(imgPath)) {
+    return res.status(404).json({ error: 'Image not found' });
+  }
+
+  // Set proper headers (guessing png/jpeg based on extension)
+  const ext = path.extname(filename).toLowerCase();
+  let contentType = 'image/png';
+  if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+  else if (ext === '.svg') contentType = 'image/svg+xml';
+  else if (ext === '.webp') contentType = 'image/webp';
+  else if (ext === '.gif') contentType = 'image/gif';
+
+  res.setHeader('Content-Type', contentType);
+
+  const fileStream = fs.createReadStream(imgPath);
+  fileStream.on('error', (err) => {
+    console.error('Error streaming image:', err);
+    res.status(500).json({ error: 'Failed to retrieve image' });
   });
 
   fileStream.pipe(res);

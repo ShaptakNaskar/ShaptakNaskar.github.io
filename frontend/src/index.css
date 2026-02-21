@@ -28,6 +28,205 @@
   border-radius: 5px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #333;
+::-webkit-scrollbar-thumb:hover {}
+
+@layer utilities {
+  .text-shadow-glow {
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.4), 0 0 20px rgba(0, 229, 255, 0.2);
+  }
+
+  .text-shadow-glow-red {
+    text-shadow: 0 0 10px rgba(255, 0, 85, 0.6), 0 0 20px rgba(255, 0, 85, 0.4);
+  }
+
+  .text-shadow-glow-yellow {
+    text-shadow: 0 0 10px rgba(250, 235, 44, 0.7), 0 0 20px rgba(250, 235, 44, 0.5);
+  }
+
+  /* Scanlines overlay */
+  .cyberpunk-scanlines {
+    background: linear-gradient(rgba(4, 13, 26, 0) 50%,
+        rgba(0, 0, 0, 0.2) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+  }
+
+  .cyberpunk-bg-base {
+    background-color: #040D1A;
+  }
+
+  .cyberpunk-card {
+    background-color: #0B192C;
+    border: 1px solid rgba(0, 229, 255, 0.15);
+  }
+
+  .cyberpunk-text-primary {
+    color: #00E5FF;
+  }
+
+  .cyberpunk-text-muted {
+    color: #008B99;
+  }
+
+  /* Cyberpunk container shapes */
+  .clip-path-cyberpunk {
+    clip-path: polygon(0 0,
+        100% 0,
+        100% calc(100% - 15px),
+        calc(100% - 15px) 100%,
+        0 100%);
+  }
+
+  .clip-path-cyberpunk-tl {
+    clip-path: polygon(15px 0,
+        100% 0,
+        100% 100%,
+        0 100%,
+        0 15px);
+  }
+
+  .clip-path-cyberpunk-tr {
+    clip-path: polygon(0 0,
+        calc(100% - 15px) 0,
+        100% 15px,
+        100% 100%,
+        0 100%);
+  }
+
+  .clip-path-cyberpunk-bl {
+    clip-path: polygon(0 0,
+        100% 0,
+        100% 100%,
+        15px 100%,
+        0 calc(100% - 15px));
+  }
+
+  .clip-path-cyberpunk-br {
+    clip-path: polygon(0 0,
+        100% 0,
+        100% calc(100% - 15px),
+        calc(100% - 15px) 100%,
+        0 100%);
+  }
+
+  .border-cyberpunk {
+    position: relative;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+  }
+
+  .border-cyberpunk::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 20px;
+    height: 20px;
+    border-bottom: 2px solid cyan;
+    border-right: 2px solid cyan;
+  }
+
+  .border-cyberpunk-red {
+    position: relative;
+    border: 1px solid rgba(255, 0, 85, 0.3);
+  }
+
+  .border-cyberpunk-red::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 15px;
+    height: 2px;
+    background-color: #ff0055;
+  }
+
+  /* Glitch Animations */
+  .glitch-wrapper {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glitch-text {
+    position: relative;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+      0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+    animation: glitch 500ms infinite;
+  }
+
+  .glitch-text span {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .glitch-text span:first-child {
+    animation: glitch 650ms infinite;
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    transform: translate(-0.025em, -0.0125em);
+    opacity: 0.8;
+  }
+
+  .glitch-text span:last-child {
+    animation: glitch 375ms infinite;
+    clip-path: polygon(0 80%, 100% 20%, 100% 100%, 0 100%);
+    transform: translate(0.0125em, 0.025em);
+    opacity: 0.8;
+  }
+
+  @keyframes glitch {
+    0% {
+      text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+        -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+    }
+
+    14% {
+      text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+        -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+    }
+
+    15% {
+      text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+        -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+    }
+
+    49% {
+      text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+        -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+    }
+
+    50% {
+      text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75),
+        0 -0.05em 0 rgba(0, 0, 255, 0.75);
+    }
+
+    99% {
+      text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75),
+        0 -0.05em 0 rgba(0, 0, 255, 0.75);
+    }
+
+    100% {
+      text-shadow: -0.025em 0 0 rgba(255, 0, 85, 0.75), -0.025em -0.025em 0 rgba(0, 255, 255, 0.75);
+    }
+  }
+
+  /* Custom Scrollbar for Cyberpunk Theme */
+  .cyberpunk-scrollbar::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+
+  .cyberpunk-scrollbar::-webkit-scrollbar-track {
+    background: #040D1A;
+  }
+
+  .cyberpunk-scrollbar::-webkit-scrollbar-thumb {
+    background: #00E5FF;
+    border-radius: 2px;
+  }
+
+  .cyberpunk-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #fff;
+  }
 }
