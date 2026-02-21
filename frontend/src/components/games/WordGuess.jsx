@@ -250,7 +250,10 @@ function WordGuess() {
                         {audioEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
                     </button>
                     <button
-                        onClick={startGame}
+                        onClick={(e) => {
+                            e.currentTarget.blur();
+                            startGame();
+                        }}
                         disabled={!canRestart}
                         className={`p-2 rounded-lg bg-white/10 text-gray-400 hover:text-primary transition-colors ${!canRestart ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >

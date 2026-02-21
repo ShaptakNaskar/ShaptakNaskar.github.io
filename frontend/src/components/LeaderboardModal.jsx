@@ -20,6 +20,10 @@ function LeaderboardModal({ isOpen, onClose, game, currentScore, onSubmitScore }
 
     useEffect(() => {
         if (isOpen && game) {
+            setSubmitted(false);
+            setPlayerName('');
+            setError('');
+            setQualifies(false);
             fetchLeaderboard();
         }
     }, [isOpen, game]);
