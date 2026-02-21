@@ -7,6 +7,24 @@ import LeaderboardModal from '../LeaderboardModal';
 
 const WORD_LENGTH = 6;
 const MAX_GUESSES = 6;
+const MIN_DATAMUSE_SCORE = 1000;
+const FALLBACK_WORDS = [
+    { word: 'PLANET', hint: 'A large round object that moves around a star.' },
+    { word: 'ROCKET', hint: 'A vehicle designed to travel using powerful thrust.' },
+    { word: 'SYSTEM', hint: 'A set of connected parts working together.' },
+    { word: 'CODING', hint: 'The activity of writing instructions for computers.' },
+    { word: 'SERVER', hint: 'A computer that provides data or services to others.' },
+    { word: 'SCRIPT', hint: 'A small program used to automate tasks.' },
+    { word: 'DESIGN', hint: 'The process of planning how something should look or work.' }
+];
+
+const getMeaningHint = (wordEntry, fallbackWord) => {
+    if (Array.isArray(wordEntry?.defs) && wordEntry.defs.length > 0) {
+        const meaning = wordEntry.defs[0].split('\t').slice(1).join(' ').trim();
+        if (meaning) return meaning;
+    }
+    return `Starts with ${fallbackWord[0]} and ends with ${fallbackWord[fallbackWord.length - 1]}.`;
+};
 
 function WordGuess() {
     const [targetWord, setTargetWord] = useState('');
@@ -19,20 +37,36 @@ function WordGuess() {
     const [viewingLeaderboard, setViewingLeaderboard] = useState(false);
     const [score, setScore] = useState(0);
     const [canRestart, setCanRestart] = useState(true);
+    const [wordHint, setWordHint] = useState('');
 
     // Fetch a 6-letter word
     const fetchWord = useCallback(async () => {
         setGameStatus('loading');
         try {
-            // Fetch 6-letter words from datamuse
-            const res = await fetch('https://api.datamuse.com/words?sp=??????&max=50');
+            // Fetch 6-letter words plus definitions from Datamuse
+            const res = await fetch('https://api.datamuse.com/words?sp=??????&md=d&max=1000');
             const data = await res.json();
 
-            if (data && data.length > 0) {
-                const randomWord = data[Math.floor(Math.random() * data.length)].word.toUpperCase();
-                // Basic validation: ensure it's letters only
+            const commonWords = data.filter((entry) => (
+                typeof entry.word === 'string'
+                && /^[a-z]{6}$/.test(entry.word)
+                && (entry.score ?? 0) >= MIN_DATAMUSE_SCORE
+            ));
+
+            const candidateWords = commonWords.length > 0
+                ? commonWords
+                : data.filter((entry) => (
+                    typeof entry.word === 'string'
+                    && /^[a-z]{6}$/.test(entry.word)
+                    && (entry.score ?? 0) >= 400
+                ));
+
+            if (candidateWords.length > 0) {
+                const selectedWord = candidateWords[Math.floor(Math.random() * candidateWords.length)];
+                const randomWord = selectedWord.word.toUpperCase();
                 if (/^[A-Z]{6}$/.test(randomWord)) {
                     setTargetWord(randomWord);
+                    setWordHint(getMeaningHint(selectedWord, randomWord));
                     setGameStatus('playing');
                     return;
                 }
@@ -41,8 +75,9 @@ function WordGuess() {
         } catch (err) {
             console.error('Failed to fetch word:', err);
             // Fallback words
-            const fallbacks = ['PLANET', 'ROCKET', 'SYSTEM', 'CODING', 'SERVER', 'SCRIPT', 'DESIGN'];
-            setTargetWord(fallbacks[Math.floor(Math.random() * fallbacks.length)]);
+            const fallback = FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
+            setTargetWord(fallback.word);
+            setWordHint(fallback.hint);
             setGameStatus('playing');
         }
     }, []);
@@ -54,6 +89,7 @@ function WordGuess() {
         setCurrentGuess('');
         setScore(0);
         setMessage('');
+        setWordHint('');
         fetchWord();
     };
 
@@ -286,6 +322,16 @@ function WordGuess() {
                         )}
                     </AnimatePresence>
                 </div>
+            </div>
+
+            <div className="glass-panel p-4 rounded-2xl border border-primary/30">
+                <div className="flex items-center gap-2 mb-2">
+                    <HelpCircle size={18} className="text-primary" />
+                    <h2 className="text-sm uppercase tracking-wider text-primary font-bold">Hint</h2>
+                </div>
+                <p className="text-white text-base sm:text-lg leading-relaxed min-h-[3rem]">
+                    {wordHint || 'Loading hint...'}
+                </p>
             </div>
 
             {/* Keyboard */}
