@@ -7,7 +7,7 @@ import LeaderboardModal from '../LeaderboardModal';
 
 const WORD_LENGTH = 6;
 const MAX_GUESSES = 6;
-const MIN_DATAMUSE_SCORE = 1000;
+const MIN_DATAMUSE_SCORE = 50000;
 const FALLBACK_WORDS = [
     { word: 'PLANET', hint: 'A large round object that moves around a star.' },
     { word: 'ROCKET', hint: 'A vehicle designed to travel using powerful thrust.' },
