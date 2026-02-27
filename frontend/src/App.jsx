@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
@@ -19,6 +19,21 @@ import CyberpunkWeather from './components/webapps/CyberpunkWeather';
 function App() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // Dynamically inject Keep Android Open banner
+    const script = document.createElement('script');
+    script.src = 'https://keepandroidopen.org/banner.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      // Optional: Cleanup script if component unmounts
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
 
   const navLinks = [
     { name: 'Projects', hash: '#projects' },
