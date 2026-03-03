@@ -14,6 +14,7 @@ import Game2048 from './components/games/Game2048';
 import Breakout from './components/games/Breakout';
 import CosmicLander from './components/games/CosmicLander';
 import SpaceDefender from './components/games/SpaceDefender';
+import CardBlitz from './components/games/CardBlitz';
 import CyberpunkWeather from './components/webapps/CyberpunkWeather';
 
 function App() {
@@ -256,6 +257,19 @@ function App() {
                       transition={{ duration: 0.3 }}
                     >
                       <SpaceDefender />
+                    </motion.div>
+                  }
+                />
+                <Route
+                  path="/games/wild-cards"
+                  element={
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <CardBlitz />
                     </motion.div>
                   }
                 />

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Volume2, VolumeX, Trophy, Disc, FileQuestion, Grid3X3, Layers, Rocket, Crosshair } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX, Trophy, Disc, FileQuestion, Grid3X3, Layers, Rocket, Crosshair, Zap } from 'lucide-react';
 import gameAudio from '../utils/audio';
 import LeaderboardModal from './LeaderboardModal';
 
@@ -53,6 +53,14 @@ const games = [
         gradient: 'from-blue-600 to-cyan-500',
         Icon: Crosshair,
         path: '/games/space-defender'
+    },
+    {
+        id: 'wild-cards',
+        name: 'Wild Cards',
+        description: '1v3 card game — Classic & No Mercy modes',
+        gradient: 'from-rose-500 to-amber-500',
+        Icon: Zap,
+        path: '/games/wild-cards'
     }
 ];
 
