@@ -1,0 +1,164 @@
+%-------------------------
+% Jake's Resume Style — Shaptak Naskar
+% Compile with: pdflatex ShaptakCV.tex
+%-------------------------
+
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{latexsym}
+\usepackage[margin=0.5in, top=0.5in, bottom=0.5in]{geometry}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{tabularx}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+\begin{document}
+
+%----------HEADING-----------
+\begin{center}
+    \textbf{\Huge \scshape Shaptak Naskar} \\ \vspace{1pt}
+    \small Kolkata, India $|$
+    \href{mailto:ddtectiv.ddip2017@gmail.com}{\underline{ddtectiv.ddip2017@gmail.com}} $|$
+    \href{https://linkedin.com/in/shaptak}{\underline{linkedin.com/in/shaptak}} $|$
+    \href{https://github.com/ShaptakNaskar}{\underline{github.com/ShaptakNaskar}} $|$
+    \href{https://sappy-dir.vercel.app/}{\underline{sappy-dir.vercel.app}}
+\end{center}
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Greater Kolkata College of Engineering and Management}{Kolkata, India}
+      {Bachelor of Technology -- Computer Science; GPA: 7.20}{August 2022 -- July 2025}
+    \resumeSubheading
+      {Engineering Institute for Junior Executives}{Kolkata, India}
+      {Diploma -- Electronics and Telecommunication; GPA: 7.80}{June 2019 -- August 2022}
+  \resumeSubHeadingListEnd
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {AI Project Intern}{Nov 2025 -- Mar 2026}
+      {MindEdge Solutions}{Kolkata, India}
+      \resumeItemListStart
+        \resumeItem{Helped build a full-featured \textbf{AI Meeting Summarizer} using Groq Whisper v3 and GPT-OSS-120B that automatically generates Minutes of Meeting (MOM), transcripts, and actionable to-do lists from audio/video recordings; integrated MOM sharing and collaborative review workflows.}
+        \resumeItem{Developed an AI-powered \textbf{Content Calendar Generator} for digital marketing — accepts client name, website, and date range to produce a holiday-inclusive content calendar with post schedules, captions, hashtags, AI-generated image prompts, and logo-embedded image exports.}
+        \resumeItem{Engineered a \textbf{Business Card to vCard Converter} using GPT-4o-mini for OCR-based contact extraction; integrated webcam capture via getUserMedia and Base64 file upload, reducing manual contact entry from minutes to seconds at $\sim$\$0.01 per scan with no backend required.}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------
+\section{Projects}
+    \resumeSubHeadingListStart
+
+      \resumeProjectHeading
+          {\textbf{Auto AI Brochure Generator} $|$ \emph{Node.js, AI, GUI, Automation}}{}
+          \resumeItemListStart
+            \resumeItem{Automated system that generates comprehensive digital marketing proposals from incoming email inquiries and website analysis using AI, eliminating hours of manual proposal writing.}
+          \resumeItemListEnd
+
+      \resumeProjectHeading
+          {\textbf{Content Automation Engine} $|$ \emph{Node.js, AI, GUI, Digital Marketing}}{}
+          \resumeItemListStart
+            \resumeItem{GUI-based social media automation platform that manages the full lifecycle of content creation and publication — from AI-assisted drafting to scheduled cross-platform posting.}
+          \resumeItemListEnd
+
+      \resumeProjectHeading
+          {\textbf{ADB Commander} $|$ \emph{Electron, Windows, Linux, Cross-platform GUI}}{}
+          \resumeItemListStart
+            \resumeItem{Modern cross-platform GUI frontend for the Android Debug Bridge (ADB), simplifying device management and debugging workflows without requiring command-line expertise.}
+          \resumeItemListEnd
+
+      \resumeProjectHeading
+          {\textbf{WeatherMan} $|$ \emph{Flutter, Dart, Android, REST API}}{}
+          \resumeItemListStart
+            \resumeItem{Glassmorphic Android weather application inspired by iOS Weather UI; integrates a live weather API with smooth animations and a modern design system built with Flutter.}
+          \resumeItemListEnd
+
+    \resumeSubHeadingListEnd
+
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: JavaScript, Python, Dart, HTML/CSS, Bash} \\
+     \textbf{Frameworks \& Libraries}{: React.js, Node.js, Express.js, Flutter, MongoDB (MERN Stack)} \\
+     \textbf{AI \& APIs}{: OpenAI API (GPT-4o-mini), Groq Whisper v3, GPT-OSS-120B, REST API integration} \\
+     \textbf{Tools \& Platforms}{: Git, GitHub, Vercel, ExifTool, Android Debug Bridge (ADB), Vite, Tailwind CSS} \\
+     \textbf{Areas}{: Full Stack Web Development, Android Development, Automation Scripting, AI-Assisted Development}
+    }}
+ \end{itemize}
+
+%-----------CERTIFICATIONS-----------
+\section{Certifications \& Training}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{30-Hour Cybersecurity Training} --- Ardent Computech Pvt. Ltd., Mar 2024.
+     Threat detection, encryption, secure networks, and vulnerability mitigation. \\
+     \textbf{30-Hour AI \& ML with Python Training} --- Ardent Computech Pvt. Ltd., Mar 2024.
+     Data processing, model training/deployment, predictive analytics with NumPy \& scikit-learn. \\
+     \textbf{Cybersecurity Virtual Internship (10 Weeks)} --- AICTE, Feb 2023.
+     Ethical hacking, firewall configuration, incident response, and enterprise security tooling.
+    }}
+ \end{itemize}
+
+%-------------------------------------------
+\end{document}

@@ -54,10 +54,18 @@ const ProjectGrid = () => {
                     <div className="p-5">
                         <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-primary transition-colors">{project.ProjName}</h3>
                         <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">{project.ProjSummary}</p>
-                        <div className="flex justify-between items-center mt-auto">
-                            {/* Place for tags if available, currently just filler */}
-                            <div className="text-xs text-gray-500 font-mono"></div>
-                        </div>
+                        {project.Tags && project.Tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-auto">
+                                {project.Tags.map((tag, i) => (
+                                    <span
+                                        key={i}
+                                        className="px-2 py-0.5 text-xs font-mono rounded-md bg-primary/10 text-teal-700 dark:text-primary/80 border border-primary/20"
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             ))}

@@ -5,7 +5,8 @@ import WebAppGrid from './WebAppGrid';
 import BlogList from './BlogList';
 import MilestonePopup from './MilestonePopup';
 import { motion } from 'framer-motion';
-import { Github, Mail, Send, Linkedin, Youtube, FileText } from 'lucide-react';
+import { Github, Mail, Send, Linkedin, Youtube, FileText, Download, Gamepad2, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 function Home() {
     const [hitCount, setHitCount] = React.useState(null);
@@ -50,7 +51,51 @@ function Home() {
                         className="relative w-32 h-32 rounded-full border-2 border-white/10 object-cover"
                     />
                 </div>
+
+                {/* Role Title + Open to Work */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mb-6 flex flex-col items-center gap-3"
+                >
+                    <h1 className="text-lg md:text-xl font-mono text-gray-600 dark:text-gray-400 tracking-wide">
+                        AI-Assisted Full Stack Developer
+                    </h1>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium font-mono rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 animate-pulse">
+                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                        Open to Opportunities
+                    </span>
+                </motion.div>
+
                 <Terminal />
+
+                {/* Hero CTA - View CV */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="mt-8 flex gap-4"
+                >
+                    <a
+                        href="/api/download-cv"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-purple-600 dark:from-primary dark:to-secondary text-white font-medium hover:scale-105 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40"
+                    >
+                        <FileText size={18} />
+                        <span>View my CV</span>
+                    </a>
+                    <a
+                        href="https://github.com/ShaptakNaskar"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 dark:bg-glass text-gray-800 dark:text-white font-medium hover:scale-105 transition-all border border-gray-200/50 dark:border-glass-border hover:border-primary/30"
+                    >
+                        <Github size={18} />
+                        <span>GitHub</span>
+                    </a>
+                </motion.div>
             </section>
 
             {/* Web Apps Section */}
@@ -92,6 +137,26 @@ function Home() {
                 <BlogList />
             </section>
 
+            {/* Games Teaser */}
+            <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+            >
+                <Link
+                    to="/games"
+                    className="group flex items-center justify-center gap-3 mx-auto max-w-lg px-6 py-4 rounded-2xl bg-white/5 dark:bg-glass border border-gray-200/30 dark:border-glass-border hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10"
+                >
+                    <Gamepad2 size={20} className="text-gray-500 group-hover:text-primary transition-colors" />
+                    <span className="text-sm font-mono text-gray-500 group-hover:text-gray-300 transition-colors">
+                        Got 5 minutes? Take a break in the
+                    </span>
+                    <span className="text-sm font-mono font-bold text-teal-600 dark:text-primary group-hover:translate-x-1 transition-transform">
+                        Arcade →
+                    </span>
+                </Link>
+            </motion.section>
+
             {/* My Links Section */}
             <section id="links" className="text-center">
                 <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-white">Content & Code</h2>
@@ -124,10 +189,6 @@ function Home() {
                     <a href="https://linkedin.com/in/shaptak" target="_blank" rel="noopener noreferrer" className="p-3 bg-white/10 dark:bg-glass rounded-full hover:bg-blue-600/20 text-gray-800 dark:text-white transition-all hover:scale-110 hover:text-blue-500 border border-gray-200/50 dark:border-transparent" title="LinkedIn"><Linkedin size={24} /></a>
                     <a href="mailto:ddtectiv.ddip2017@gmail.com" className="p-3 bg-white/10 dark:bg-glass rounded-full hover:bg-primary/20 text-gray-800 dark:text-white transition-all hover:scale-110 hover:text-primary border border-gray-200/50 dark:border-transparent" title="Email"><Mail size={24} /></a>
                     <a href="https://t.me/ProllySappy" target="_blank" rel="noopener noreferrer" className="p-3 bg-white/10 dark:bg-glass rounded-full hover:bg-blue-400/20 text-gray-800 dark:text-white transition-all hover:scale-110 hover:text-blue-400 border border-gray-200/50 dark:border-transparent" title="Telegram"><Send size={24} /></a>
-                    <a href="/api/download-cv" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3 bg-white/10 dark:bg-glass rounded-full hover:bg-purple-500/20 text-gray-800 dark:text-white transition-all hover:scale-105 hover:text-purple-500 border border-gray-200/50 dark:border-transparent font-medium" title="Download CV">
-                        <FileText size={20} />
-                        <span>Get my CV</span>
-                    </a>
                 </div>
                 <div className="mt-12 text-gray-500 text-sm font-mono flex flex-col items-center gap-2">
                     <p>© {new Date().getFullYear()} Shaptak Naskar. Built with React & Tailwind.</p>

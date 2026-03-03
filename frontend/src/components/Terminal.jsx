@@ -34,19 +34,21 @@ const Terminal = () => {
                         onInit={(typewriter) => {
                             typewriter
                                 .changeDelay(40)
-                                .typeString('<span class="text-xl">Hey! I’m <strong class="text-primary">Sappy</strong>.</span><br/><br/>')
+                                .typeString(`<span class="text-xl">Hey! I'm <strong class="text-primary">Sappy</strong>.</span><br/><br/>`)
                                 .pauseFor(500)
-                                .typeString('I build <span class="text-secondary">AI-powered web experiences</span>.')
+                                .typeString(`I build <span class="text-secondary">AI-powered web experiences</span>.`)
                                 .pauseFor(600)
                                 .deleteChars(27)
-                                .typeString('<span class="text-green-400">AI-assisted MERN applications</span>.')
+                                .typeString(`<span class="text-green-400">AI-assisted MERN applications</span>.`)
                                 .pauseFor(600)
                                 .deleteChars(30)
-                                .typeString('things that are <span class="text-secondary">useful</span>, <span class="text-green-400">fast</span>, and a little <span class="text-pink-400">fun</span>.<br/>')
+                                .typeString(`things that are <span class="text-secondary">useful</span>, <span class="text-green-400">fast</span>, and a little <span class="text-pink-400">fun</span>.<br/>`)
                                 .pauseFor(500)
-                                .typeString('<br/>When I’m not coding, I’m probably playing <span class="text-pink-400">video games</span> 🎮 or exploring new tools.<br/>')
-                                .pauseFor(900)
-                                .typeString('<br/>Welcome to my digital garden.')
+                                .typeString(`<br/>MERN · Android · Python · Automation<br/>`)
+                                .pauseFor(400)
+                                .typeString(`I think with <span class="text-secondary">AI</span>, build with <span class="text-green-400">code</span>.<br/>`)
+                                .pauseFor(500)
+                                .typeString(`<br/>When I'm not coding, I'm probably playing <span class="text-pink-400">video games</span> 🎮 or exploring new tools.<br/>`)
                                 .start();
                         }}
                     />

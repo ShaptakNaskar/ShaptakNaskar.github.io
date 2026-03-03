@@ -52,7 +52,8 @@ app.get('/api/projects', async (req, res) => { // Made async just in case
         ProjName: row.ProjName || '',
         ProjSummary: row.ProjSummary || '',
         ProjImageLink: row.ProjImageLink || 'https://via.placeholder.com/400x300?text=Project',
-        ProjLink: row.ProjLink || '#'
+        ProjLink: row.ProjLink || '#',
+        Tags: row.Tags ? row.Tags.split(';').map(t => t.trim()).filter(Boolean) : []
       });
     })
     .on('end', () => {
