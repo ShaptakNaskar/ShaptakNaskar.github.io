@@ -8,3 +8,5 @@
 **/node_modules
 .vercel/project.json
 package-lock.json
+.github/copilot-instructions.md
+claude.md
