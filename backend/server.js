@@ -135,7 +135,7 @@ app.get('/api/leaderboard/:game', async (req, res) => {
     await connectDB();
 
     const { game } = req.params;
-    const validGames = ['paddles', 'wordguess', '2048', 'breakout', 'cosmic-lander', 'space-defender'];
+    const validGames = ['paddles', 'wordguess', '2048', 'breakout', 'cosmic-lander', 'space-defender', 'wild-cards'];
 
     if (!validGames.includes(game)) {
       return res.status(400).json({ error: 'Invalid game name' });
@@ -160,7 +160,7 @@ app.post('/api/leaderboard', async (req, res) => {
     await connectDB();
 
     const { game, playerName, score, achievement } = req.body;
-    const validGames = ['paddles', 'wordguess', '2048', 'breakout', 'cosmic-lander', 'space-defender'];
+    const validGames = ['paddles', 'wordguess', '2048', 'breakout', 'cosmic-lander', 'space-defender', 'wild-cards'];
 
     if (!validGames.includes(game)) {
       return res.status(400).json({ error: 'Invalid game name' });

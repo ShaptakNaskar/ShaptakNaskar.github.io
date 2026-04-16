@@ -90,7 +90,8 @@ function LeaderboardModal({ isOpen, onClose, game, currentScore, onSubmitScore }
         '2048': '2048',
         breakout: 'Breakout',
         'cosmic-lander': 'Cosmic Lander',
-        'space-defender': 'Space Defender'
+        'space-defender': 'Space Defender',
+        'wild-cards': 'Wild Cards',
     };
 
     return (
