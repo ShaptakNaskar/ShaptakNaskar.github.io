@@ -99,7 +99,7 @@ const BRICK_SLIDE_DISTANCE = 280;
 // Procedural Level Generation
 function generateLevel(levelNum) {
     const speedMultiplier = 1 + (levelNum * 0.12);
-    const paddleWidth = Math.max(60, 100 - (levelNum * 4));
+    const paddleWidth = Math.max(75, 100 - (levelNum * 2));
 
     const allPatterns = [
         'checkerboard', 'rows', 'columns', 'random', 'dense',
@@ -465,6 +465,17 @@ function Breakout() {
         state.brickCount = count;
 
         if (transitioning) {
+            // Rescale surviving balls to the new level's base speed so speed-up
+            // isn't delayed until the next life loss.
+            const newSpeed = Math.min(MAX_BALL_SPEED, 6 * config.speedMultiplier);
+            state.balls.forEach(ball => {
+                const current = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                if (current > 0) {
+                    const factor = newSpeed / current;
+                    ball.vx *= factor;
+                    ball.vy *= factor;
+                }
+            });
             state.brickTransitionEnd = performance.now() + BRICK_TRANSITION_MS;
             drawStatic();
         } else {
