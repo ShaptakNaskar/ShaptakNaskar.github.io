@@ -22,6 +22,7 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
+    { name: 'Skills', hash: '#skills' },
     { name: 'Projects', hash: '#projects' },
     { name: 'Blogs', hash: '#blogs' },
     { name: 'Games', path: '/games' },

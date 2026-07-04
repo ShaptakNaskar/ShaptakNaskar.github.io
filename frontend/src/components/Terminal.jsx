@@ -46,6 +46,8 @@ const Terminal = () => {
                                 .pauseFor(500)
                                 .typeString(`<br/>MERN · Android · Python · Automation<br/>`)
                                 .pauseFor(400)
+                                .typeString(`Windows & Linux native — a decade of PC surgery, down to the NT kernel.<br/>`)
+                                .pauseFor(400)
                                 .typeString(`I think with <span class="text-secondary">AI</span>, build with <span class="text-green-400">code</span>.<br/>`)
                                 .pauseFor(500)
                                 .typeString(`<br/>When I'm not coding, I'm probably playing <span class="text-pink-400">video games</span> 🎮 or exploring new tools.<br/>`)

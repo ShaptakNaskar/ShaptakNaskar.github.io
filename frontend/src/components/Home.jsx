@@ -1,5 +1,6 @@
 import React from 'react';
 import Terminal from './Terminal';
+import Skills from './Skills';
 import ProjectGrid from './ProjectGrid';
 import WebAppGrid from './WebAppGrid';
 import BlogList from './BlogList';
@@ -59,9 +60,12 @@ function Home() {
                     transition={{ delay: 0.2 }}
                     className="mb-6 flex flex-col items-center gap-3"
                 >
-                    <h1 className="text-lg md:text-xl font-mono text-gray-600 dark:text-gray-400 tracking-wide">
-                        AI-Assisted Full Stack Developer
+                    <h1 className="text-lg md:text-xl font-mono text-gray-600 dark:text-gray-400 tracking-wide text-center">
+                        Full Stack & AI Developer
                     </h1>
+                    <p className="text-xs md:text-sm font-mono text-gray-500 dark:text-gray-500 tracking-wide">
+                        windows · linux · hardware — under the hood since 2015
+                    </p>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium font-mono rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 animate-pulse">
                         <span className="w-2 h-2 rounded-full bg-green-500"></span>
                         Open to Opportunities
@@ -96,6 +100,19 @@ function Home() {
                         <span>GitHub</span>
                     </a>
                 </motion.div>
+            </section>
+
+            {/* Skills Section */}
+            <section id="skills">
+                <motion.h2
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    className="text-3xl font-bold mb-12 text-center"
+                >
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-purple-600 dark:from-primary dark:to-white">Skills & Systems</span>
+                </motion.h2>
+                <Skills />
             </section>
 
             {/* Web Apps Section */}
