@@ -355,6 +355,73 @@ app.get('/api/webapp_img/:filename', (req, res) => {
 });
 
 // ====================================
+// HANAMIMI+ LISTENING STATS + LEADERBOARD
+// ====================================
+const HanamimiStat = require('./models/HanamimiStat');
+
+const clampInt = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+};
+
+// Opt-in stats upload from Hanamimi+. Upserts by clientId so a user's
+// row updates rather than duplicating. Nickname is sanitized; we never
+// store anything the app didn't explicitly send with consent.
+app.post('/api/hanamimi/stats', async (req, res) => {
+  try {
+    await connectDB();
+    const b = req.body || {};
+    const clientId = String(b.clientId || '').trim().slice(0, 64);
+    if (!clientId) return res.status(400).json({ error: 'clientId required' });
+
+    const nickname = sanitizeName(b.nickname).slice(0, 24) || 'Anonymous';
+    const localSeconds = clampInt(b.localSeconds);
+    const youtubeSeconds = clampInt(b.youtubeSeconds);
+    const saavnSeconds = clampInt(b.saavnSeconds);
+    const localSongs = clampInt(b.localSongs);
+    const youtubeSongs = clampInt(b.youtubeSongs);
+    const saavnSongs = clampInt(b.saavnSongs);
+
+    const doc = {
+      nickname,
+      device: String(b.device || '').replace(/[^\w .\-()+]/g, '').slice(0, 60),
+      localSeconds, youtubeSeconds, saavnSeconds,
+      localSongs, youtubeSongs, saavnSongs,
+      totalSeconds: localSeconds + youtubeSeconds + saavnSeconds,
+      totalSongs: localSongs + youtubeSongs + saavnSongs,
+      updatedAt: new Date(),
+    };
+
+    await HanamimiStat.findOneAndUpdate(
+      { clientId },
+      { $set: doc, $setOnInsert: { clientId } },
+      { upsert: true, new: true }
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error saving hanamimi stats:', err);
+    res.status(500).json({ error: 'Failed to save stats' });
+  }
+});
+
+// Top 10 listeners by total time. Nicknames only — no device/ids leak.
+app.get('/api/hanamimi/leaderboard', async (req, res) => {
+  try {
+    await connectDB();
+    const top = await HanamimiStat.find()
+      .sort({ totalSeconds: -1 })
+      .limit(10)
+      // device is optional (users may share name only); shown when present.
+      .select('nickname device totalSeconds totalSongs localSeconds youtubeSeconds saavnSeconds -_id')
+      .lean();
+    res.json(top);
+  } catch (err) {
+    console.error('Error fetching hanamimi leaderboard:', err);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
+// ====================================
 // STATIC FILES AND WILDCARD ROUTE COME LAST
 // ====================================
 
