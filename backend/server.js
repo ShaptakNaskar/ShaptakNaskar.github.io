@@ -25,7 +25,9 @@ connectDB();
 
 // Enable CORS for frontend access
 app.use(cors());
-app.use(express.json());
+// 6mb: Hanamimi's encrypted backup blobs ride JSON as base64 (the
+// Vercel function request cap is ~4.5MB of raw body anyway).
+app.use(express.json({ limit: '6mb' }));
 
 // ====================================
 // API ROUTES MUST COME BEFORE STATIC FILES
@@ -392,9 +394,21 @@ app.post('/api/hanamimi/stats', async (req, res) => {
       updatedAt: new Date(),
     };
 
+    // Taste fingerprint (3.0 #5): 128 × 32-bit MinHash mins, or an
+    // explicit null to withdraw a previously shared one. Anything
+    // malformed is ignored rather than rejected — the stats update
+    // must never fail over the optional extra.
+    const update = { $set: doc, $setOnInsert: { clientId } };
+    if (Array.isArray(b.signature) && b.signature.length === 128 &&
+        b.signature.every((n) => Number.isFinite(n) && n >= 0)) {
+      update.$set.signature = b.signature.map((n) => Math.floor(n));
+    } else if (b.signature === null) {
+      update.$unset = { signature: 1 };
+    }
+
     await HanamimiStat.findOneAndUpdate(
       { clientId },
-      { $set: doc, $setOnInsert: { clientId } },
+      update,
       { upsert: true, new: true }
     );
     res.json({ ok: true });
@@ -405,6 +419,9 @@ app.post('/api/hanamimi/stats', async (req, res) => {
 });
 
 // Top 10 listeners by total time. Nicknames only — no device/ids leak.
+// With ?clientId= the rows are annotated with taste compatibility vs
+// the caller (3.0 #5): percent of matching MinHash positions. Percent
+// only — raw signatures never leave the server.
 app.get('/api/hanamimi/leaderboard', async (req, res) => {
   try {
     await connectDB();
@@ -412,13 +429,335 @@ app.get('/api/hanamimi/leaderboard', async (req, res) => {
       .sort({ totalSeconds: -1 })
       .limit(10)
       // device is optional (users may share name only); shown when present.
-      .select('nickname device totalSeconds totalSongs localSeconds youtubeSeconds saavnSeconds -_id')
+      .select('clientId nickname device totalSeconds totalSongs localSeconds youtubeSeconds saavnSeconds signature -_id')
       .lean();
-    res.json(top);
+
+    const callerId = String(req.query.clientId || '').trim().slice(0, 64);
+    let mySig = null;
+    if (callerId) {
+      const me = await HanamimiStat.findOne({ clientId: callerId })
+        .select('signature -_id').lean();
+      if (me && Array.isArray(me.signature) && me.signature.length === 128) {
+        mySig = me.signature;
+      }
+    }
+
+    res.json(top.map((row) => {
+      const out = {
+        nickname: row.nickname,
+        device: row.device || '',
+        totalSeconds: row.totalSeconds,
+        totalSongs: row.totalSongs,
+        localSeconds: row.localSeconds,
+        youtubeSeconds: row.youtubeSeconds,
+        saavnSeconds: row.saavnSeconds,
+      };
+      if (callerId && row.clientId === callerId) {
+        out.self = true;
+      } else if (mySig && Array.isArray(row.signature) &&
+                 row.signature.length === 128) {
+        let matches = 0;
+        for (let i = 0; i < 128; i++) {
+          if (row.signature[i] === mySig[i]) matches++;
+        }
+        out.compat = Math.round((matches / 128) * 100);
+      }
+      return out;
+    }));
   } catch (err) {
     console.error('Error fetching hanamimi leaderboard:', err);
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
+});
+
+const HanamimiBackup = require('./models/HanamimiBackup');
+const HanamimiRoom = require('./models/HanamimiRoom');
+
+// ---- Long-Distance Date rooms (Hanamimi 3.0 #6) ----
+
+// No 0/O/1/I/L — codes get read out loud over voice calls.
+const ROOM_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const makeRoomCode = () => Array.from({ length: 6 },
+  () => ROOM_ALPHABET[Math.floor(Math.random() * ROOM_ALPHABET.length)]).join('');
+
+const roomView = (room, memberId, sinceQueueRev) => {
+  const partner = (room.members || []).find((m) => m.id !== memberId);
+  const online = partner &&
+    (Date.now() - new Date(partner.lastSeen).getTime()) < 10000;
+  return {
+    ok: true,
+    code: room.code,
+    controlRev: room.controlRev,
+    queueRev: room.queueRev,
+    // The queue only rides along when the client is behind — it's the
+    // bulky part of the document and it rarely changes.
+    queue: room.queueRev > sinceQueueRev ? room.queue : undefined,
+    currentIndex: room.currentIndex,
+    positionMs: room.positionMs,
+    positionAgeMs: Date.now() - new Date(room.positionAt).getTime(),
+    isPlaying: room.isPlaying,
+    partner: partner ? {
+      online: !!online,
+      stalled: !!partner.stalled && online,
+      bufferedMs: partner.bufferedMs,
+      positionMs: partner.positionMs,
+      trackKey: partner.trackKey,
+    } : null,
+  };
+};
+
+app.post('/api/hanamimi/room', async (req, res) => {
+  try {
+    await connectDB();
+    const memberId = String((req.body || {}).memberId || '').trim().slice(0, 64);
+    if (!memberId) return res.status(400).json({ error: 'memberId required' });
+    // Collisions are astronomically unlikely at this scale but cheap
+    // to retry anyway.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const code = makeRoomCode();
+      try {
+        const room = await HanamimiRoom.create({
+          code,
+          members: [{ id: memberId, lastSeen: new Date() }],
+        });
+        return res.json(roomView(room, memberId, -1));
+      } catch (e) {
+        if (e.code !== 11000) throw e; // 11000 = duplicate code, retry
+      }
+    }
+    res.status(500).json({ error: 'could not mint a room code' });
+  } catch (err) {
+    console.error('Error creating hanamimi room:', err);
+    res.status(500).json({ error: 'Failed to create room' });
+  }
+});
+
+app.post('/api/hanamimi/room/:code/join', async (req, res) => {
+  try {
+    await connectDB();
+    const code = String(req.params.code || '').trim().toUpperCase();
+    const memberId = String((req.body || {}).memberId || '').trim().slice(0, 64);
+    if (!memberId) return res.status(400).json({ error: 'memberId required' });
+    const room = await HanamimiRoom.findOne({ code });
+    if (!room) return res.status(404).json({ error: 'room not found' });
+    const already = room.members.some((m) => m.id === memberId);
+    if (!already && room.members.length >= 2) {
+      return res.status(409).json({ error: 'room is full' });
+    }
+    if (!already) {
+      room.members.push({ id: memberId, lastSeen: new Date() });
+      await room.save();
+    }
+    res.json(roomView(room, memberId, -1));
+  } catch (err) {
+    console.error('Error joining hanamimi room:', err);
+    res.status(500).json({ error: 'Failed to join room' });
+  }
+});
+
+// The one endpoint that does everything: presence heartbeat, partner
+// status, and (optionally) a control write — queue/index/position/
+// play state, last-write-wins via controlRev.
+app.post('/api/hanamimi/room/:code/sync', async (req, res) => {
+  try {
+    await connectDB();
+    const code = String(req.params.code || '').trim().toUpperCase();
+    const b = req.body || {};
+    const memberId = String(b.memberId || '').trim().slice(0, 64);
+    if (!memberId) return res.status(400).json({ error: 'memberId required' });
+    const room = await HanamimiRoom.findOne({ code });
+    if (!room) return res.status(404).json({ error: 'room not found' });
+    const member = room.members.find((m) => m.id === memberId);
+    if (!member) return res.status(403).json({ error: 'not in this room' });
+
+    member.lastSeen = new Date();
+    member.positionMs = Math.max(0, Number(b.positionMs) || 0);
+    member.isPlaying = !!b.isPlaying;
+    member.bufferedMs = Math.max(0, Number(b.bufferedMs) || 0);
+    member.stalled = !!b.stalled;
+    member.trackKey = String(b.trackKey || '').slice(0, 128);
+
+    const control = b.control;
+    if (control && typeof control === 'object') {
+      if (Array.isArray(control.queue)) {
+        room.queue = control.queue.slice(0, 200).map((t) => ({
+          title: String(t.title || '').slice(0, 300),
+          artist: String(t.artist || '').slice(0, 300),
+          album: String(t.album || '').slice(0, 300),
+          source: String(t.source || 'youtube').slice(0, 16),
+          sourceId: String(t.sourceId || '').slice(0, 128),
+          durationMs: Math.max(0, Number(t.durationMs) || 0),
+          artUrl: String(t.artUrl || '').slice(0, 600),
+        }));
+        room.queueRev += 1;
+      }
+      if (Number.isFinite(Number(control.currentIndex))) {
+        room.currentIndex = Math.max(0, Math.floor(Number(control.currentIndex)));
+      }
+      if (Number.isFinite(Number(control.positionMs))) {
+        room.positionMs = Math.max(0, Number(control.positionMs));
+        room.positionAt = new Date();
+      }
+      if (typeof control.isPlaying === 'boolean') {
+        room.isPlaying = control.isPlaying;
+      }
+      room.controlRev += 1;
+    }
+
+    room.expiresAt = new Date(Date.now() + 24 * 3600 * 1000);
+    await room.save();
+    res.json(roomView(room, memberId,
+      Number.isFinite(Number(b.sinceQueueRev)) ? Number(b.sinceQueueRev) : -1));
+  } catch (err) {
+    console.error('Error syncing hanamimi room:', err);
+    res.status(500).json({ error: 'Failed to sync' });
+  }
+});
+
+app.post('/api/hanamimi/room/:code/leave', async (req, res) => {
+  try {
+    await connectDB();
+    const code = String(req.params.code || '').trim().toUpperCase();
+    const memberId = String((req.body || {}).memberId || '').trim().slice(0, 64);
+    const room = await HanamimiRoom.findOne({ code });
+    if (room) {
+      room.members = room.members.filter((m) => m.id !== memberId);
+      if (room.members.length === 0) {
+        await room.deleteOne();
+      } else {
+        await room.save();
+      }
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error leaving hanamimi room:', err);
+    res.status(500).json({ error: 'Failed to leave' });
+  }
+});
+
+// Zero-knowledge backup blobs (Hanamimi 3.0 #8). The server stores
+// ciphertext under a phrase-derived id and hands it back — that's the
+// whole contract. Upsert so re-backups replace the previous blob.
+app.post('/api/hanamimi/backup', async (req, res) => {
+  try {
+    await connectDB();
+    const b = req.body || {};
+    const blobId = String(b.blobId || '').trim().toLowerCase();
+    const data = typeof b.data === 'string' ? b.data : '';
+    if (!/^[0-9a-f]{64}$/.test(blobId)) {
+      return res.status(400).json({ error: 'bad blobId' });
+    }
+    if (!data || data.length > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: 'bad or oversized data' });
+    }
+    await HanamimiBackup.findOneAndUpdate(
+      { blobId },
+      { $set: { data, size: data.length, updatedAt: new Date() },
+        $setOnInsert: { blobId } },
+      { upsert: true }
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error saving hanamimi backup:', err);
+    res.status(500).json({ error: 'Failed to save backup' });
+  }
+});
+
+app.get('/api/hanamimi/backup/:blobId', async (req, res) => {
+  try {
+    await connectDB();
+    const blobId = String(req.params.blobId || '').trim().toLowerCase();
+    if (!/^[0-9a-f]{64}$/.test(blobId)) {
+      return res.status(400).json({ error: 'bad blobId' });
+    }
+    const doc = await HanamimiBackup.findOne({ blobId })
+      .select('data -_id').lean();
+    if (!doc) return res.status(404).json({ error: 'not found' });
+    res.json({ data: doc.data });
+  } catch (err) {
+    console.error('Error fetching hanamimi backup:', err);
+    res.status(500).json({ error: 'Failed to fetch backup' });
+  }
+});
+
+// Hidden leaderboard admin (Hanamimi 3.0). Password lives in .env
+// (HANAMIMI_ADMIN_PASSWORD) — no accounts, no sessions: the password
+// rides each data request and is checked server-side.
+app.post('/api/hanamimi/admin', async (req, res) => {
+  try {
+    const expected = process.env.HANAMIMI_ADMIN_PASSWORD;
+    if (!expected) {
+      return res.status(503).json({ error: 'Admin password not configured' });
+    }
+    const given = String((req.body || {}).password || '');
+    if (given !== expected) {
+      return res.status(401).json({ error: 'Wrong password' });
+    }
+    await connectDB();
+    const rows = await HanamimiStat.find()
+      .sort({ totalSeconds: -1 })
+      .select('-_id -__v')
+      .lean();
+    res.json(rows.map((r) => ({
+      ...r,
+      // Raw MinHash values are noise to a human — show presence only.
+      signature: undefined,
+      hasSignature: Array.isArray(r.signature) && r.signature.length > 0,
+    })));
+  } catch (err) {
+    console.error('Error in hanamimi admin:', err);
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+// The page itself: a self-contained HTML shell that asks for the
+// password and renders the full table. Deliberately unlinked from the
+// portfolio — you have to know the URL.
+app.get('/hanamimi-leaderboards', (req, res) => {
+  res.type('html').send(`<!doctype html>
+<html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hanamimi — leaderboard admin</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#16121a;color:#eee;margin:0;padding:2rem}
+  h1{font-size:1.2rem;color:#ff9eb5}
+  input,button{font:inherit;padding:.5rem .8rem;border-radius:8px;border:1px solid #444;background:#241e2b;color:#eee}
+  button{cursor:pointer;background:#ff9eb5;color:#241e2b;border:none;font-weight:600}
+  table{border-collapse:collapse;margin-top:1.5rem;width:100%;font-size:.85rem}
+  th,td{padding:.45rem .6rem;border-bottom:1px solid #333;text-align:left;white-space:nowrap}
+  th{color:#ff9eb5;position:sticky;top:0;background:#16121a}
+  .wrap{overflow-x:auto}
+  .err{color:#ff7a7a;margin-top:.8rem}
+  .muted{color:#888}
+</style></head><body>
+<h1>Hanamimi leaderboard — admin 🌸</h1>
+<form id="f"><input type="password" id="p" placeholder="password" autofocus>
+<button>Peek</button></form>
+<div id="out"></div>
+<script>
+const f=document.getElementById('f'),out=document.getElementById('out');
+const fmt=(s)=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h>0?h+'h '+m+'m':m+'m'};
+f.addEventListener('submit',async(e)=>{
+  e.preventDefault();out.innerHTML='<p class="muted">loading…</p>';
+  try{
+    const r=await fetch('/api/hanamimi/admin',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:document.getElementById('p').value})});
+    if(!r.ok){const j=await r.json().catch(()=>({}));
+      out.innerHTML='<p class="err">'+(j.error||('HTTP '+r.status))+'</p>';return}
+    const rows=await r.json();
+    if(!rows.length){out.innerHTML='<p class="muted">no rows</p>';return}
+    let h='<div class="wrap"><table><tr><th>#</th><th>nickname</th><th>device</th><th>total</th><th>songs</th><th>local</th><th>yt</th><th>saavn</th><th>taste</th><th>clientId</th><th>updated</th></tr>';
+    rows.forEach((x,i)=>{h+='<tr><td>'+(i+1)+'</td><td>'+x.nickname+'</td><td>'+(x.device||'—')
+      +'</td><td>'+fmt(x.totalSeconds)+'</td><td>'+x.totalSongs
+      +'</td><td>'+fmt(x.localSeconds)+'</td><td>'+fmt(x.youtubeSeconds)+'</td><td>'+fmt(x.saavnSeconds)
+      +'</td><td>'+(x.hasSignature?'✓':'—')
+      +'</td><td class="muted">'+x.clientId+'</td><td class="muted">'
+      +new Date(x.updatedAt).toISOString().slice(0,16).replace('T',' ')+'</td></tr>'});
+    out.innerHTML=h+'</table></div>';
+  }catch(err){out.innerHTML='<p class="err">'+err+'</p>'}
+});
+</script></body></html>`);
 });
 
 // ====================================

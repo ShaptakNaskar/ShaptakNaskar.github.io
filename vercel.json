@@ -6,6 +6,10 @@
       "destination": "/api/index.js"
     },
     {
+      "source": "/hanamimi-leaderboards",
+      "destination": "/api/index.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/public/$1"
     }

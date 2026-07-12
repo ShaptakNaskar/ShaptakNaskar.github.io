@@ -18,9 +18,20 @@ const hanamimiStatSchema = new mongoose.Schema({
   totalSeconds: { type: Number, default: 0, index: true },
   totalSongs: { type: Number, default: 0 },
 
+  // Taste-compatibility MinHash (Hanamimi 3.0 #5): 128 × 32-bit mins
+  // over the user's top artists, computed client-side. Irreversible —
+  // the server can estimate overlap between two users but never
+  // recover an artist name. Optional (its own consent line in-app).
+  signature: { type: [Number], default: undefined },
+
   updatedAt: { type: Date, default: Date.now },
 }, { collection: 'hanamimi_stats' });
 
 hanamimiStatSchema.index({ totalSeconds: -1 });
 
-module.exports = mongoose.model('HanamimiStat', hanamimiStatSchema);
+// Hanamimi data lives in its own 'hanamimi' database, not the cluster
+// default ('test') where the portfolio/zendrive collections live.
+// useDb shares the existing connection pool — no second connection.
+module.exports = mongoose.connection
+  .useDb('hanamimi', { useCache: true })
+  .model('HanamimiStat', hanamimiStatSchema);
