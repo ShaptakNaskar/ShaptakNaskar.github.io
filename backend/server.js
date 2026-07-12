@@ -614,6 +614,51 @@ app.post('/api/hanamimi/room/:code/sync', async (req, res) => {
   }
 });
 
+// Ably token vending (3.0 LDD realtime transport). The API key must
+// never ship inside the app binary — a Flutter "env var" is just a
+// string in the APK — so room members trade their membership for a
+// short-lived token scoped to exactly their room's two channels
+// (hanamimi:st:CODE carries queue/control state, hanamimi:hb:CODE the
+// presence heartbeats). Everything realtime then flows client↔Ably;
+// Mongo keeps the room doc as the late-join/reconnect snapshot.
+let ablyRest = null;
+const getAbly = () => {
+  if (!process.env.ABLY_API_KEY) return null;
+  if (!ablyRest) {
+    const Ably = require('ably');
+    ablyRest = new Ably.Rest(process.env.ABLY_API_KEY);
+  }
+  return ablyRest;
+};
+
+app.post('/api/hanamimi/room/:code/token', async (req, res) => {
+  try {
+    await connectDB();
+    const code = String(req.params.code || '').trim().toUpperCase();
+    const memberId = String((req.body || {}).memberId || '').trim().slice(0, 64);
+    if (!memberId) return res.status(400).json({ error: 'memberId required' });
+    const room = await HanamimiRoom.findOne({ code });
+    if (!room) return res.status(404).json({ error: 'room not found' });
+    if (!room.members.some((m) => m.id === memberId)) {
+      return res.status(403).json({ error: 'not in this room' });
+    }
+    const ably = getAbly();
+    if (!ably) return res.status(503).json({ error: 'realtime not configured' });
+    const token = await ably.auth.requestToken({
+      clientId: memberId,
+      ttl: 60 * 60 * 1000,
+      capability: JSON.stringify({
+        [`hanamimi:st:${code}`]: ['publish', 'subscribe'],
+        [`hanamimi:hb:${code}`]: ['publish', 'subscribe'],
+      }),
+    });
+    res.json({ ok: true, token: token.token, expires: token.expires });
+  } catch (err) {
+    console.error('Error minting hanamimi ably token:', err);
+    res.status(500).json({ error: 'Failed to mint token' });
+  }
+});
+
 app.post('/api/hanamimi/room/:code/leave', async (req, res) => {
   try {
     await connectDB();
