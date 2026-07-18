@@ -14,3 +14,5 @@ zendrive-sprints/
 CLAUDE.md
 .gitignore
 ZENDRIVE_MASTER.md
+.agents/
+.gitignore

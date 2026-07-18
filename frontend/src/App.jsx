@@ -16,6 +16,7 @@ import CosmicLander from './components/games/CosmicLander';
 import SpaceDefender from './components/games/SpaceDefender';
 import CardBlitz from './components/games/CardBlitz';
 import CyberpunkWeather from './components/webapps/CyberpunkWeather';
+import Hanamimi from './components/webapps/Hanamimi';
 import HanamimiLeaderboard from './components/HanamimiLeaderboard';
 
 function App() {
@@ -36,7 +37,7 @@ function App() {
   };
 
   const isGameRoute = location.pathname.startsWith('/games/');
-  const isStandaloneApp = location.pathname.startsWith('/webapps/weather');
+  const isStandaloneApp = location.pathname.startsWith('/webapps/weather') || location.pathname.startsWith('/webapps/hanamimi');
 
   return (
     <div className="min-h-screen transition-colors duration-300 relative overflow-hidden font-sans">
@@ -66,6 +67,20 @@ function App() {
                     className="w-full h-full min-h-screen"
                   >
                     <CyberpunkWeather />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="/webapps/hanamimi"
+                element={
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1 }}
+                    className="w-full h-full min-h-screen"
+                  >
+                    <Hanamimi />
                   </motion.div>
                 }
               />

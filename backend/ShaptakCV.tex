@@ -8,7 +8,6 @@
 \usepackage{latexsym}
 \usepackage[margin=0.5in, top=0.5in, bottom=0.5in]{geometry}
 \usepackage{titlesec}
-\usepackage{marvosym}
 \usepackage[usenames,dvipsnames]{color}
 \usepackage{verbatim}
 \usepackage{enumitem}
@@ -72,7 +71,7 @@
 %----------HEADING-----------
 \begin{center}
     \textbf{\Huge \scshape Shaptak Naskar} \\ \vspace{4pt}
-{\large\textit{Full Stack \& AI Developer}} \\ \vspace{6pt}
+{\large\textit{Full Stack \& Android Developer}} \\ \vspace{6pt}
     \small Kolkata, India $|$
     \href{mailto:ddtectiv.ddip2017@gmail.com}{\underline{ddtectiv.ddip2017@gmail.com}} $|$
     \href{https://linkedin.com/in/shaptak}{\underline{linkedin.com/in/shaptak}} $|$
@@ -91,21 +90,29 @@
       {Diploma -- Electronics and Telecommunication; GPA: 7.80}{June 2019 -- August 2022}
   \resumeSubHeadingListEnd
 
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Python, JavaScript, Dart, Bash} \\
+     \textbf{Frameworks \& Libraries}{: React, Node.js, Express.js, Flutter, React Native (Expo), Riverpod, Tailwind CSS, Socket.IO} \\
+     \textbf{Databases \& Cloud}{: MongoDB, MySQL, Firebase, Vercel} \\
+     \textbf{AI Engineering}{: speech-to-text pipelines (Whisper v3 via Groq), LLM structured-output workflows (OpenAI, GPT-OSS-120B), AI document/invoice parsing, lead classification \& enrichment} \\
+     \textbf{APIs \& Integrations}{: Google Workspace APIs (Gmail, Drive, Sheets), OAuth 2.0, REST API design, realtime messaging (Ably, Socket.IO)} \\
+     \textbf{Systems \& Platforms}{: Linux \& Windows administration, Android app signing \& Play Store deployment, Git, GitHub, Vercel serverless}
+    }}
+ \end{itemize}
+
 %-----------EXPERIENCE-----------
 \section{Experience}
   \resumeSubHeadingListStart
     \resumeSubheading
-      {Junior Software Developer}{Apr 2026 -- Present}
-      {MindEdge Solutions}{Kolkata, India}
+      {MindEdge Solutions}{Nov 2025 -- Present}
+      {Junior Software Developer (Apr 2026 -- Present) $\cdot$ AI Project Intern (Nov 2025 -- Mar 2026)}{Kolkata, India}
       \resumeItemListStart
-\resumeItem{Built \textbf{CanvassAI}, a multi-tenant SaaS that automates the full B2B sales pipeline — monitors client Gmail inboxes, classifies inbound leads with AI, scrapes prospect websites, and auto-sends personalized brochure/proposal PDFs via Google Drive and Gmail reply; includes an outbound module with contact import, AI enrichment, service-fit research, bulk cold email generation, and live Google Sheets sync; secured with per-firm OAuth, AES-256 token encryption, and a real-time Socket.IO dashboard}
-      \resumeItemListEnd
-      \resumeSubheading
-      {AI Project Intern}{Nov 2025 -- Mar 2026}
-      {MindEdge Solutions}{Kolkata, India}
-      \resumeItemListStart
-        \resumeItem{Helped build a full-featured \textbf{AI Meeting Summarizer} using Groq Whisper v3 and GPT-OSS-120B that automatically generates Minutes of Meeting (MOM), transcripts, and actionable to-do lists from audio/video recordings; integrated MOM sharing and collaborative review workflows.}
-        \resumeItem{Developed an AI-powered \textbf{Content Calendar Generator} for digital marketing — accepts client name, website, and date range to produce a holiday-inclusive content calendar with post schedules, captions, hashtags, AI-generated image prompts, and logo-embedded image exports.}
+        \resumeItem{Built an \textbf{AI Meeting Summarizer} (Groq Whisper v3 + GPT-OSS-120B) that turns audio/video recordings into minutes of meeting, transcripts, and action items; processed \textbf{200+ meetings}, compressing a 30-minute session into $\sim$2 minutes of reading --- a \textbf{$\sim$93\% reduction in review time}.}
+        \resumeItem{Shipped an \textbf{AI Lead Generator}, a multi-tenant B2B sales-automation SaaS --- classifies inbound Gmail leads, scrapes prospect websites, and auto-sends personalized proposal PDFs; \textbf{processed 600+ leads} at MindEdge alone at a pace of \textbf{$\sim$60 proposals/month}, with an outbound module that fields routine pre-sales queries without human involvement.}
+        \resumeItem{Delivered \textbf{Factory Portal}, a factory QC \& costing management suite (Express, MongoDB/MySQL, React Native app) live in production at a sister company --- centralizes QC checklists, proforma invoices, and document storage across \textbf{20+ active projects}, with AI-parsed invoice line items and automated PDF report generation.}
       \resumeItemListEnd
   \resumeSubHeadingListEnd
 
@@ -114,42 +121,19 @@
     \resumeSubHeadingListStart
 
       \resumeProjectHeading
-          {\textbf{Auto AI Brochure Generator} $|$ \emph{Node.js, AI, GUI, Automation}}{}
+          {\textbf{Hanamimi} $|$ \emph{Flutter, Dart, Riverpod} $|$ \href{https://github.com/ShaptakNaskar/hanamimi}{\underline{github.com/ShaptakNaskar/hanamimi}}}{}
           \resumeItemListStart
-            \resumeItem{Automated system that generates comprehensive digital marketing proposals from incoming email inquiries and website analysis using AI, eliminating hours of manual proposal writing.}
+            \resumeItem{Android music player with a real-time FFT audio visualizer, crossfade/gapless playback, synced lyrics, background media session, and a four-theme animated design system built on Riverpod.}
+            \resumeItem{Extended with an online layer: music-taste compatibility matching, realtime shared-listening rooms (Ably), listening-stats leaderboards, and end-to-end encrypted library backups.}
           \resumeItemListEnd
 
       \resumeProjectHeading
-          {\textbf{Content Automation Engine} $|$ \emph{Node.js, AI, GUI, Digital Marketing}}{}
+          {\textbf{WeatherMan} $|$ \emph{Flutter, Dart, Android, Open-Meteo API} $|$ \href{https://github.com/ShaptakNaskar/weatherman}{\underline{github.com/ShaptakNaskar/weatherman}}}{}
           \resumeItemListStart
-            \resumeItem{GUI-based social media automation platform that manages the full lifecycle of content creation and publication — from AI-assisted drafting to scheduled cross-platform posting.}
-          \resumeItemListEnd
-
-      \resumeProjectHeading
-          {\textbf{ADB Commander} $|$ \emph{Electron, Windows, Linux, Cross-platform GUI}}{}
-          \resumeItemListStart
-            \resumeItem{Modern cross-platform GUI frontend for the Android Debug Bridge (ADB), simplifying device management and debugging workflows without requiring command-line expertise.}
-          \resumeItemListEnd
-
-      \resumeProjectHeading
-          {\textbf{WeatherMan} $|$ \emph{Flutter, Dart, Android, REST API}}{}
-          \resumeItemListStart
-            \resumeItem{Glassmorphic Android weather application inspired by iOS Weather UI; integrates a live weather API with smooth animations and a modern design system built with Flutter.}
+            \resumeItem{Glassmorphic Android weather application inspired by iOS Weather UI; integrates Open-Meteo forecast and air-quality APIs with smooth animations and a modern design system built with Flutter.}
           \resumeItemListEnd
 
     \resumeSubHeadingListEnd
-
-%-----------TECHNICAL SKILLS-----------
-\section{Technical Skills}
- \begin{itemize}[leftmargin=0.15in, label={}]
-    \small{\item{
-     \textbf{Languages}{: JavaScript, Python, Dart, HTML/CSS, Bash} \\
-     \textbf{Frameworks \& Libraries}{: React.js, Node.js, Express.js, Flutter, MongoDB (MERN Stack)} \\
-     \textbf{AI \& APIs}{: OpenAI API (GPT-4o-mini), Groq Whisper v3, GPT-OSS-120B, REST API integration} \\
-     \textbf{Tools \& Platforms}{: Git, GitHub, Vercel, ExifTool, Android Debug Bridge (ADB), Vite, Tailwind CSS} \\
-     \textbf{Areas}{: Full Stack Web Development, Android Development, Automation Scripting, AI-Assisted Development}
-    }}
- \end{itemize}
 
 %-----------CERTIFICATIONS-----------
 \section{Certifications \& Training}

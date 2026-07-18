@@ -1,2 +1,3 @@
 AppName,AppSummary,AppImageLink,AppLink
 Cyberweather,A full-screen tactical web dashboard with real-time weather and environment sensing data.,/api/webapp_img/cyberweather.png,/webapps/weather
+Hanamimi,"A kawaii player for your own local music — themes, a live mascot, real-time visualizer and lyrics. Files stay on your device; nothing is uploaded.",/hanamimi-preview.png,/webapps/hanamimi
