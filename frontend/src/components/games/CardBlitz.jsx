@@ -2,9 +2,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Volume2, VolumeX, Trophy, RotateCcw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import gameAudio from '../../utils/audio';
 import LeaderboardModal from '../LeaderboardModal';
+
+const Motion = motion;
 
 /* ─────────────────────────────────────────────────────
    CONSTANTS
@@ -15,6 +17,8 @@ const PLAYER_NAMES = ['You', 'Blaze', 'Storm', 'Viper'];
 const CARDS_PER_PLAYER = 7;
 const MERCY_LIMIT = 25;
 const WILD_CALL_MS = 4000;
+const DRAW_FLIGHT_MS = 620;
+const WILD_REVEAL_MS = 840;
 
 // Colour style tokens used throughout the UI
 const CS = {
@@ -196,6 +200,15 @@ function drawCards(g, n) {
     return { g: { ...g, drawPile: g.drawPile.slice(drawn.length) }, drawn };
 }
 
+function drawTopCard(g) {
+    const ready = ensureDrawPile(g);
+    if (!ready.drawPile.length) return { g: ready, card: null };
+    return {
+        g: { ...ready, drawPile: ready.drawPile.slice(1) },
+        card: ready.drawPile[0],
+    };
+}
+
 function nextActive(idx, dir, players) {
     const n = players.length;
     for (let i = 0; i < n; i++) {
@@ -340,7 +353,7 @@ function GameCard({ card, playable = false, faceDown = false, onClick, size = 'm
     const cs      = isWild ? null : CS[card.color];
 
     return (
-        <motion.div
+        <Motion.div
             layoutId={`card-${card.id}`}
             layout="position"
             initial={isNew ? { opacity: 0, y: 30, scale: 0.7 } : false}
@@ -397,6 +410,172 @@ function GameCard({ card, playable = false, faceDown = false, onClick, size = 'm
                 <div>{symbol}</div>
                 {label && size !== 'sm' && <div className="opacity-60 mt-px" style={{ fontSize: '0.62em' }}>{label}</div>}
             </div>
+        </Motion.div>
+    );
+}
+
+/* ─────────────────────────────────────────────────────
+   DRAW / RARE-CARD CHOREOGRAPHY
+───────────────────────────────────────────────────── */
+
+function DrawFlight({ flight, reducedMotion }) {
+    const card = { ...flight.card, id: `flight-${flight.key}` };
+    const startX = flight.from.x - 34;
+    const startY = flight.from.y - 50;
+    const endX = flight.to.x - 34;
+    const endY = flight.to.y - 50;
+    const arcX = startX + (endX - startX) * 0.55;
+    const arcY = Math.min(startY, endY) - 58;
+
+    const initial = reducedMotion
+        ? { opacity: 0 }
+        : { x: startX, y: startY, opacity: 1, scale: 0.96, rotate: -4 };
+    const animate = reducedMotion
+        ? { opacity: [0, 1, 0] }
+        : {
+            x: [startX, arcX, endX, endX],
+            y: [startY, arcY, endY, endY],
+            opacity: [1, 1, 1, 0],
+            scale: [0.96, 1.13, 0.9, 0.84],
+            rotate: [-4, 3, 0, 0],
+        };
+
+    return (
+        <motion.div
+            initial={initial}
+            animate={animate}
+            exit={{ opacity: 0, transition: { duration: reducedMotion ? 0.05 : 0.1 } }}
+            transition={reducedMotion
+                ? { duration: 0.16, times: [0, 0.45, 1] }
+                : {
+                    duration: DRAW_FLIGHT_MS / 1000,
+                    times: [0, 0.38, 0.84, 1],
+                    ease: [0.22, 1, 0.36, 1],
+                }
+            }
+            className="fixed left-0 top-0 z-[70] pointer-events-none"
+            style={reducedMotion
+                ? { width: 68, height: 100, left: endX, top: endY }
+                : { width: 68, height: 100, perspective: 800 }
+            }
+            aria-hidden="true"
+        >
+            <motion.div
+                initial={reducedMotion ? false : { rotateY: 180 }}
+                animate={reducedMotion ? { opacity: 1 } : { rotateY: [180, 178, 0, 0] }}
+                transition={reducedMotion
+                    ? { duration: 0.16 }
+                    : { duration: DRAW_FLIGHT_MS / 1000, times: [0, 0.38, 0.84, 1], ease: [0.22, 1, 0.36, 1] }
+                }
+                className="absolute inset-0"
+                style={{ transformStyle: 'preserve-3d' }}
+            >
+                <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden' }}>
+                    <GameCard card={card} size="lg" mode={flight.mode} />
+                </div>
+                {!reducedMotion && (
+                    <div
+                        className="absolute inset-0"
+                        style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                    >
+                        <GameCard card={{ id: `back-${flight.key}` }} faceDown size="lg" />
+                    </div>
+                )}
+            </motion.div>
+            <div className="absolute -top-9 left-1/2 -translate-x-1/2">
+                <motion.div
+                    initial={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
+                    animate={reducedMotion
+                        ? { opacity: [0, 1, 0] }
+                        : { opacity: [0, 1, 1, 0], scale: [0.9, 1, 1, 0.96] }
+                    }
+                    transition={{ duration: reducedMotion ? 0.16 : DRAW_FLIGHT_MS / 1000, times: reducedMotion ? [0, 0.45, 1] : [0, 0.18, 0.78, 1] }}
+                    className="whitespace-nowrap rounded-full border border-white/20 bg-black/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-xl"
+                >
+                    {flight.label}
+                </motion.div>
+            </div>
+        </motion.div>
+    );
+}
+
+function getWildMoment(card) {
+    switch (card.type) {
+        case 'wild_draw10': return { eyebrow: 'ULTRA RARE', title: 'WILD +10', accent: '#fb7185' };
+        case 'wild_draw6': return { eyebrow: 'POWER DRAW', title: 'WILD +6', accent: '#c084fc' };
+        case 'wild_rev_draw4': return { eyebrow: 'POWER DRAW', title: 'REVERSE +4', accent: '#60a5fa' };
+        case 'wild_draw4': return { eyebrow: 'RARE DRAW', title: 'WILD +4', accent: '#fbbf24' };
+        case 'wild_roulette': return { eyebrow: 'CHAOS CARD', title: 'ROULETTE', accent: '#34d399' };
+        default: return { eyebrow: 'RARE DRAW', title: 'WILD CARD', accent: '#fbbf24' };
+    }
+}
+
+function WildRevealOverlay({ reveal, reducedMotion }) {
+    const moment = getWildMoment(reveal.card);
+    const card = { ...reveal.card, id: `wild-reveal-${reveal.key}` };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reducedMotion ? 0.12 : 0.18 }}
+            className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden pointer-events-none"
+            style={{ background: 'radial-gradient(circle at center, rgba(24,12,45,0.7), rgba(0,0,0,0.82) 58%, rgba(0,0,0,0.92))' }}
+            role="status"
+            aria-live="polite"
+            aria-label={`${moment.eyebrow}: ${moment.title}`}
+        >
+            {!reducedMotion && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.3 }}
+                        animate={{ opacity: [0, 0.7, 0], scale: [0.3, 1.15, 1.7] }}
+                        transition={{ duration: WILD_REVEAL_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute h-72 w-72 rounded-full border border-white/30"
+                        style={{ boxShadow: `0 0 70px ${moment.accent}66, inset 0 0 60px ${moment.accent}33` }}
+                    />
+                    <motion.div
+                        initial={{ rotate: -24, opacity: 0 }}
+                        animate={{ rotate: 28, opacity: [0, 0.28, 0] }}
+                        transition={{ duration: WILD_REVEAL_MS / 1000, ease: [0.65, 0, 0.35, 1] }}
+                        className="absolute h-[2px] w-[34rem] bg-gradient-to-r from-transparent via-white to-transparent"
+                    />
+                </>
+            )}
+
+            <motion.div
+                initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 42, scale: 0.65, rotate: -9 }}
+                animate={reducedMotion
+                    ? { opacity: [0, 1, 1, 0] }
+                    : { opacity: [0, 1, 1, 0], y: [42, -8, -8, -18], scale: [0.65, 1.42, 1.42, 1.5], rotate: [-9, 3, 3, 1] }
+                }
+                transition={{
+                    duration: reducedMotion ? 0.2 : WILD_REVEAL_MS / 1000,
+                    times: [0, 0.28, 0.78, 1],
+                    ease: [0.16, 1, 0.3, 1],
+                }}
+                className="relative"
+                style={{ filter: `drop-shadow(0 18px 34px ${moment.accent}88)` }}
+            >
+                <GameCard card={card} size="lg" mode={reveal.mode} />
+            </motion.div>
+
+            <motion.div
+                initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.9 }}
+                animate={{ opacity: [0, 1, 1, 0], y: reducedMotion ? 0 : [18, 0, 0, -6], scale: reducedMotion ? 1 : [0.9, 1, 1, 0.98] }}
+                transition={{
+                    duration: reducedMotion ? 0.2 : WILD_REVEAL_MS / 1000,
+                    times: [0, 0.25, 0.78, 1],
+                    ease: [0.16, 1, 0.3, 1],
+                }}
+                className="absolute top-[calc(50%+108px)] text-center"
+            >
+                <p className="text-[10px] font-black uppercase tracking-[0.38em]" style={{ color: moment.accent }}>
+                    {reveal.source === 'played' ? 'Power play' : moment.eyebrow}
+                </p>
+                <p className="mt-1 text-2xl font-black tracking-wider text-white sm:text-3xl">{moment.title}</p>
+            </motion.div>
         </motion.div>
     );
 }
@@ -630,8 +809,9 @@ function AiPanel({ player, isCurrentTurn, showThinking }) {
 ───────────────────────────────────────────────────── */
 
 export default function CardBlitz() {
+    const reducedMotion = useReducedMotion();
     const [phase, setPhase] = useState('menu');
-    // phases: menu | playing | color_pick | swap_pick | roulette_pick | game_over
+    // phases: menu | playing | drawing | wild_reveal | color_pick | swap_pick | roulette_pick | game_over
     const [game, setGame]         = useState(null);
     const [messages, setMessages] = useState([]);
     const [aiThinking, setAiThinking]       = useState(false);
@@ -641,12 +821,18 @@ export default function CardBlitz() {
     const [score, setScore]     = useState(0);
     const [wildActive, setWildActive] = useState(false);
     const [turnKey, setTurnKey] = useState(0);
+    const [drawFlight, setDrawFlight] = useState(null);
+    const [wildReveal, setWildReveal] = useState(null);
 
     const pendingCardRef   = useRef(null);
     const pendingPlayerRef = useRef(null);
     const aiTimeoutRef     = useRef(null);
     const wildTimeoutRef   = useRef(null);
     const msgTimeoutRef    = useRef(null);
+    const sequenceTokenRef = useRef(0);
+    const drawPileRef      = useRef(null);
+    const discardPileRef   = useRef(null);
+    const handTargetRef    = useRef(null);
 
     /* ── Audio ─────────────────────────────────── */
     useEffect(() => {
@@ -654,6 +840,7 @@ export default function CardBlitz() {
         gameAudio.reset();
         return () => {
             unsub();
+            sequenceTokenRef.current += 1;
             clearTimeout(aiTimeoutRef.current);
             clearTimeout(wildTimeoutRef.current);
         };
@@ -666,9 +853,59 @@ export default function CardBlitz() {
         msgTimeoutRef.current = setTimeout(() => setMessages(prev => prev.slice(1)), duration);
     }, []);
 
+    function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function getAnchor(ref, fallback) {
+        const rect = ref.current?.getBoundingClientRect();
+        if (!rect) return fallback;
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+
+    async function animateDraw(card, destination, label, token, mode) {
+        const viewport = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        const from = getAnchor(drawPileRef, { x: viewport.x - 60, y: viewport.y });
+        const targetRef = destination === 'discard' ? discardPileRef : handTargetRef;
+        const fallback = destination === 'discard'
+            ? { x: viewport.x + 60, y: viewport.y }
+            : { x: viewport.x, y: window.innerHeight - 105 };
+        const to = getAnchor(targetRef, fallback);
+
+        setDrawFlight({
+            key: `${token}-${card.id}-${Date.now()}`,
+            card,
+            from,
+            to,
+            label,
+            mode,
+        });
+
+        await wait(reducedMotion ? 170 : DRAW_FLIGHT_MS);
+        if (sequenceTokenRef.current !== token) return false;
+        setDrawFlight(null);
+        await wait(reducedMotion ? 20 : 65);
+        return sequenceTokenRef.current === token;
+    }
+
+    async function celebrateWild(card, source, token, mode) {
+        if (card.color !== 'wild') return true;
+        setWildReveal({
+            key: `${token}-${card.id}-${Date.now()}`,
+            card,
+            source,
+            mode,
+        });
+        await wait(reducedMotion ? 210 : WILD_REVEAL_MS);
+        if (sequenceTokenRef.current !== token) return false;
+        setWildReveal(null);
+        await wait(reducedMotion ? 20 : 100);
+        return sequenceTokenRef.current === token;
+    }
+
     /* ── Game over detection ─────────────────── */
     useEffect(() => {
-        if (!game || phase === 'menu' || phase === 'game_over') return;
+        if (!game || ['menu', 'game_over', 'drawing', 'wild_reveal', 'color_pick', 'swap_pick', 'roulette_pick'].includes(phase)) return;
         const empty = game.players.find(p => !p.isOut && p.hand.length === 0);
         if (empty) {
             const s = calcScore(game.players, empty.id);
@@ -687,7 +924,7 @@ export default function CardBlitz() {
             setPhase('game_over');
             gameAudio.play(winner.isHuman ? 'win' : 'gameOver');
         }
-    }, [game?.players, phase]);
+    }, [game, phase]);
 
     /* ── AI turn driver ──────────────────────── */
     useEffect(() => {
@@ -1046,6 +1283,7 @@ export default function CardBlitz() {
 
     /* ── Start / Reset ───────────────────────── */
     function startGame(mode) {
+        sequenceTokenRef.current += 1;
         gameAudio.init();
         gameAudio.resume();
         const g = initGame(mode);
@@ -1054,6 +1292,8 @@ export default function CardBlitz() {
         setScore(0);
         setMessages([]);
         setWildActive(false);
+        setDrawFlight(null);
+        setWildReveal(null);
         setTurnKey(0);
         pendingCardRef.current = null;
         pendingPlayerRef.current = null;
@@ -1066,6 +1306,7 @@ export default function CardBlitz() {
     }
 
     function resetGame() {
+        sequenceTokenRef.current += 1;
         clearTimeout(aiTimeoutRef.current);
         clearTimeout(wildTimeoutRef.current);
         setGame(null);
@@ -1073,6 +1314,8 @@ export default function CardBlitz() {
         setMessages([]);
         setAiThinking(false);
         setWildActive(false);
+        setDrawFlight(null);
+        setWildReveal(null);
         setScore(0);
         pendingCardRef.current = null;
         pendingPlayerRef.current = null;
@@ -1105,7 +1348,7 @@ export default function CardBlitz() {
     }
 
     /* ── Player Actions ──────────────────────── */
-    function handlePlayerPlay(cardIndex) {
+    async function handlePlayerPlay(cardIndex) {
         if (!game || game.currentPlayerIdx !== 0 || phase !== 'playing' || aiThinking || wildActive) return;
         const card = game.players[0].hand[cardIndex];
         const top  = game.discardPile[game.discardPile.length - 1];
@@ -1118,6 +1361,8 @@ export default function CardBlitz() {
         pendingCardRef.current = { card, cardIndex };
 
         if (card.color === 'wild') {
+            const token = ++sequenceTokenRef.current;
+            setPhase('wild_reveal');
             setGame(prev => {
                 const g = deepCopy(prev);
                 g.players[0].hand = g.players[0].hand.filter((_, i) => i !== cardIndex);
@@ -1125,6 +1370,8 @@ export default function CardBlitz() {
                 g.hasDrawn = false;
                 return g;
             });
+            const completed = await celebrateWild(card, 'played', token, game.mode);
+            if (!completed) return;
             setPhase('color_pick');
             return;
         }
@@ -1203,115 +1450,197 @@ export default function CardBlitz() {
         advanceTurn();
     }
 
-    function chooseRouletteColor(color) {
+    async function chooseRouletteColor(color) {
+        if (!game || phase !== 'roulette_pick') return;
+        const token = ++sequenceTokenRef.current;
+        setPhase('drawing');
+
+        let g = deepCopy(game);
+        g.currentColor = color;
+        const revealed = [];
+
+        for (let i = 0; i < 50; i++) {
+            const pull = drawTopCard(g);
+            g = pull.g;
+            if (!pull.card) break;
+
+            setGame(deepCopy(g));
+            const completed = await animateDraw(
+                pull.card,
+                'hand',
+                `Roulette pull ${i + 1}`,
+                token,
+                g.mode
+            );
+            if (!completed) return;
+
+            revealed.push(pull.card);
+            g.players[0].hand = [...g.players[0].hand, pull.card];
+            setGame(deepCopy(g));
+
+            const celebrated = await celebrateWild(pull.card, 'drawn', token, g.mode);
+            if (!celebrated) return;
+            if (pull.card.color === color) break;
+        }
+
+        if (sequenceTokenRef.current !== token) return;
+        showMsg(`Roulette: picked ${color.toUpperCase()}, drew ${revealed.length} card${revealed.length !== 1 ? 's' : ''}! 🎲`);
+        g = checkAndApplyMercy(g);
+        g.currentPlayerIdx = nextActive(0, g.direction, g.players);
+        setGame(deepCopy(g));
         setPhase('playing');
-        setGame(prev => {
-            if (!prev) return prev;
-            let g = deepCopy(prev);
-            g.currentColor = color;
-            let revealed = [];
-            for (let i = 0; i < 50; i++) {
-                g = ensureDrawPile(g);
-                if (!g.drawPile.length) break;
-                const c = g.drawPile[0];
-                g.drawPile = g.drawPile.slice(1);
-                revealed.push(c);
-                if (c.color === color) break;
-            }
-            g.players[0].hand = [...g.players[0].hand, ...revealed];
-            showMsg(`Roulette: picked ${color.toUpperCase()}, drew ${revealed.length} card${revealed.length !== 1 ? 's' : ''}! 🎲`);
-            g = checkAndApplyMercy(g);
-            g.currentPlayerIdx = nextActive(0, g.direction, g.players);
-            return g;
-        });
         advanceTurn();
     }
 
-    function handlePlayerDraw() {
+    async function handlePlayerDraw() {
         if (!game || game.currentPlayerIdx !== 0 || phase !== 'playing' || aiThinking || wildActive) return;
         if (game.hasDrawn && game.mode === 'classic') return;
         gameAudio.play('click');
+        const token = ++sequenceTokenRef.current;
+        setPhase('drawing');
 
         // Draw stack penalty (No Mercy)
         if (game.drawStack > 0 && game.mode === 'nomercy') {
             const count = game.drawStack;
-            setGame(prev => {
-                let g = deepCopy(prev);
-                const res = drawCards(g, count);
-                g = res.g;
-                g.players[0].hand = [...g.players[0].hand, ...res.drawn];
-                g.drawStack = 0;
-                showMsg(`Drew ${res.drawn.length} cards from the stack! 😰`);
-                g = checkAndApplyMercy(g);
-                g.currentPlayerIdx = nextActive(0, g.direction, g.players);
-                return g;
-            });
+            let g = deepCopy(game);
+            let drawnCount = 0;
+
+            for (let i = 0; i < count; i++) {
+                const pull = drawTopCard(g);
+                g = pull.g;
+                if (!pull.card) break;
+
+                setGame(deepCopy(g));
+                const completed = await animateDraw(
+                    pull.card,
+                    'hand',
+                    `Penalty ${i + 1} / ${count}`,
+                    token,
+                    g.mode
+                );
+                if (!completed) return;
+
+                g.players[0].hand = [...g.players[0].hand, pull.card];
+                drawnCount += 1;
+                setGame(deepCopy(g));
+
+                const celebrated = await celebrateWild(pull.card, 'drawn', token, g.mode);
+                if (!celebrated) return;
+            }
+
+            if (sequenceTokenRef.current !== token) return;
+            g.drawStack = 0;
+            showMsg(`Drew ${drawnCount} cards from the stack! 😰`);
+            g = checkAndApplyMercy(g);
+            g.currentPlayerIdx = nextActive(0, g.direction, g.players);
+            setGame(deepCopy(g));
+            setPhase('playing');
             advanceTurn();
             return;
         }
 
         if (game.mode === 'nomercy') {
-            setGame(prev => {
-                let g = deepCopy(prev);
-                let drawn = [];
-                let found = null;
-                for (let i = 0; i < 50; i++) {
-                    g = ensureDrawPile(g);
-                    if (!g.drawPile.length) break;
-                    const card = g.drawPile[0];
-                    g.drawPile = g.drawPile.slice(1);
-                    const top = g.discardPile[g.discardPile.length - 1];
-                    if (canPlayCard(card, top, g.currentColor, 0, g.mode)) { found = card; break; }
-                    drawn.push(card);
-                    g.players[0].hand = [...g.players[0].hand, card];
-                    if (g.players[0].hand.length >= MERCY_LIMIT) {
-                        g = checkAndApplyMercy(g);
-                        if (g.players[0].isOut) {
-                            g.currentPlayerIdx = nextActive(0, g.direction, g.players);
-                            return g;
-                        }
+            let g = deepCopy(game);
+            let drawnCount = 0;
+
+            for (let i = 0; i < 50; i++) {
+                const pull = drawTopCard(g);
+                g = pull.g;
+                if (!pull.card) break;
+
+                const top = g.discardPile[g.discardPile.length - 1];
+                const playable = canPlayCard(pull.card, top, g.currentColor, 0, g.mode);
+                setGame(deepCopy(g));
+
+                const completed = await animateDraw(
+                    pull.card,
+                    playable ? 'discard' : 'hand',
+                    playable ? 'Playable card!' : `Searching • ${i + 1}`,
+                    token,
+                    g.mode
+                );
+                if (!completed) return;
+
+                if (playable) {
+                    g.discardPile = [...g.discardPile, pull.card];
+                    g.hasDrawn = false;
+                    setGame(deepCopy(g));
+                    showMsg(
+                        drawnCount > 0
+                            ? `Drew ${drawnCount} card${drawnCount !== 1 ? 's' : ''}… found a playable one!`
+                            : 'Pulled a playable card!'
+                    );
+
+                    if (pull.card.color === 'wild') {
+                        pendingCardRef.current = { card: pull.card, cardIndex: -1 };
+                        const celebrated = await celebrateWild(pull.card, 'drawn', token, g.mode);
+                        if (!celebrated) return;
+                        setPhase('color_pick');
+                        return;
                     }
-                }
-                if (found) {
-                    if (drawn.length > 0) showMsg(`Drew ${drawn.length} card${drawn.length !== 1 ? 's' : ''}… found a playable one!`);
-                    if (found.color === 'wild') {
-                        g.discardPile = [...g.discardPile, found];
-                        pendingCardRef.current = { card: found, cardIndex: -1 };
-                        setTimeout(() => setPhase('color_pick'), 50);
-                        return g;
-                    }
-                    g.discardPile = [...g.discardPile, found];
-                    g.currentColor = found.color;
-                    g = applyCardEffects(g, found, 0, showMsg);
+
+                    g.currentColor = pull.card.color;
+                    g = applyCardEffects(g, pull.card, 0, showMsg);
+                    let nextPhase = 'playing';
                     if (g._needSwapPick) {
                         delete g._needSwapPick;
                         pendingPlayerRef.current = 0;
-                        setTimeout(() => setPhase('swap_pick'), 50);
-                        return g;
+                        nextPhase = 'swap_pick';
                     }
-                } else {
-                    if (drawn.length > 0) showMsg(`Drew ${drawn.length} card${drawn.length !== 1 ? 's' : ''}, none playable`);
-                    else showMsg('Draw pile empty!');
-                    g.currentPlayerIdx = nextActive(0, g.direction, g.players);
+                    setGame(deepCopy(g));
+                    setPhase(nextPhase);
+                    advanceTurn();
+                    return;
                 }
-                return g;
-            });
+
+                g.players[0].hand = [...g.players[0].hand, pull.card];
+                drawnCount += 1;
+                setGame(deepCopy(g));
+
+                if (g.players[0].hand.length >= MERCY_LIMIT) {
+                    g = checkAndApplyMercy(g);
+                    if (g.players[0].isOut) {
+                        g.currentPlayerIdx = nextActive(0, g.direction, g.players);
+                        setGame(deepCopy(g));
+                        setPhase('playing');
+                        advanceTurn();
+                        return;
+                    }
+                }
+            }
+
+            if (sequenceTokenRef.current !== token) return;
+            if (drawnCount > 0) showMsg(`Drew ${drawnCount} card${drawnCount !== 1 ? 's' : ''}, none playable`);
+            else showMsg('Draw pile empty!');
+            g.currentPlayerIdx = nextActive(0, g.direction, g.players);
+            setGame(deepCopy(g));
+            setPhase('playing');
             advanceTurn();
-        } else {
-            setGame(prev => {
-                let g = deepCopy(prev);
-                const res = drawCards(g, 1);
-                g = res.g;
-                if (res.drawn.length > 0) {
-                    g.players[0].hand = [...g.players[0].hand, res.drawn[0]];
-                    g.hasDrawn = true;
-                    showMsg('Drew a card');
-                } else {
-                    showMsg('Draw pile empty!');
-                }
-                return g;
-            });
+            return;
         }
+
+        let g = deepCopy(game);
+        const pull = drawTopCard(g);
+        g = pull.g;
+        if (!pull.card) {
+            showMsg('Draw pile empty!');
+            setGame(deepCopy(g));
+            setPhase('playing');
+            return;
+        }
+
+        setGame(deepCopy(g));
+        const completed = await animateDraw(pull.card, 'hand', 'Draw 1', token, g.mode);
+        if (!completed) return;
+
+        g.players[0].hand = [...g.players[0].hand, pull.card];
+        g.hasDrawn = true;
+        setGame(deepCopy(g));
+        showMsg('Drew a card');
+
+        const celebrated = await celebrateWild(pull.card, 'drawn', token, g.mode);
+        if (!celebrated) return;
+        setPhase('playing');
     }
 
     function handlePlayerPass() {
@@ -1543,6 +1872,7 @@ export default function CardBlitz() {
                     <div className="flex flex-col items-center gap-1">
                         <span className="text-gray-500 text-[9px] uppercase tracking-wider">Draw</span>
                         <button
+                            ref={drawPileRef}
                             onClick={(canDraw || mustDrawStack) ? handlePlayerDraw : undefined}
                             disabled={!canDraw && !mustDrawStack}
                             className={`transition-transform ${(canDraw || mustDrawStack) ? 'hover:scale-105 active:scale-95 cursor-pointer' : 'cursor-default opacity-80'}`}
@@ -1555,7 +1885,7 @@ export default function CardBlitz() {
                     {/* Discard pile */}
                     <div className="flex flex-col items-center gap-1">
                         <span className="text-gray-500 text-[9px] uppercase tracking-wider">Discard</span>
-                        <div style={{ width: 68, height: 100 }} className="relative">
+                        <div ref={discardPileRef} style={{ width: 68, height: 100 }} className="relative">
                             <AnimatePresence>
                                 {topCard && (
                                     <motion.div
@@ -1657,7 +1987,7 @@ export default function CardBlitz() {
                         </button>
                     )}
                 </div>
-                <div className="flex gap-1 sm:gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/20">
+                <div ref={handTargetRef} className="flex gap-1 sm:gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/20">
                     <AnimatePresence initial={false}>
                         {game?.players[0].hand.map((card, i) => (
                             <motion.div
@@ -1696,6 +2026,28 @@ export default function CardBlitz() {
             {/* ═══════════════════════════════════════
                 OVERLAYS
             ═══════════════════════════════════════ */}
+
+            {/* One-card-at-a-time draw flight */}
+            <AnimatePresence>
+                {drawFlight && (
+                    <DrawFlight
+                        key={drawFlight.key}
+                        flight={drawFlight}
+                        reducedMotion={reducedMotion}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Rare wild-card reveal, shown before the next decision */}
+            <AnimatePresence>
+                {wildReveal && (
+                    <WildRevealOverlay
+                        key={wildReveal.key}
+                        reveal={wildReveal}
+                        reducedMotion={reducedMotion}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Colour Picker */}
             <AnimatePresence>
