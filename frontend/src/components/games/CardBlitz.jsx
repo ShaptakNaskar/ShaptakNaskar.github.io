@@ -1,10 +1,29 @@
-// CardBlitz.jsx — UNO No Mercy (polished remake)
+// CardBlitz.jsx — classic matching-card game with a ruthless variant
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Volume2, VolumeX, Trophy, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import gameAudio from '../../utils/audio';
 import LeaderboardModal from '../LeaderboardModal';
+import {
+    COLORS,
+    MERCY_LIMIT,
+    applyMercyKnockouts,
+    canDrawNormally,
+    canPlayCard,
+    countActive,
+    deepCopy,
+    discardAllMatching,
+    drawCards,
+    drawTopCard,
+    ensureDrawPile,
+    getDrawAmt,
+    getReverseDrawFourVictim,
+    initGame,
+    isWildDrawFourLegal,
+    nextActive,
+    resolveWildDrawFour,
+} from './cardBlitzRules';
 
 const Motion = motion;
 
@@ -12,10 +31,7 @@ const Motion = motion;
    CONSTANTS
 ───────────────────────────────────────────────────── */
 
-const COLORS = ['red', 'blue', 'green', 'yellow'];
 const PLAYER_NAMES = ['You', 'Blaze', 'Storm', 'Viper'];
-const CARDS_PER_PLAYER = 7;
-const MERCY_LIMIT = 25;
 const WILD_CALL_MS = 4000;
 const DRAW_FLIGHT_MS = 620;
 const WILD_REVEAL_MS = 840;
@@ -27,63 +43,6 @@ const CS = {
     green:  { bg: 'bg-emerald-600',  grad: 'from-emerald-800 to-emerald-400',   text: 'text-white',     dim: 'text-emerald-400', ring: 'ring-emerald-400',border: 'border-emerald-500'},
     yellow: { bg: 'bg-yellow-400',   grad: 'from-yellow-500 to-yellow-300',     text: 'text-gray-900',  dim: 'text-yellow-400',  ring: 'ring-yellow-300', border: 'border-yellow-400' },
 };
-
-/* ─────────────────────────────────────────────────────
-   DECK HELPERS
-───────────────────────────────────────────────────── */
-
-function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-}
-
-function createDeck(mode) {
-    const deck = [];
-    let id = 0;
-    for (const color of COLORS) {
-        deck.push({ id: id++, color, type: 'number', value: 0 });
-        for (let v = 1; v <= 9; v++) {
-            deck.push({ id: id++, color, type: 'number', value: v });
-            deck.push({ id: id++, color, type: 'number', value: v });
-        }
-        if (mode === 'classic') {
-            for (let i = 0; i < 2; i++) {
-                deck.push({ id: id++, color, type: 'skip', value: null });
-                deck.push({ id: id++, color, type: 'reverse', value: null });
-                deck.push({ id: id++, color, type: 'draw2', value: null });
-            }
-        } else {
-            for (let i = 0; i < 3; i++) {
-                deck.push({ id: id++, color, type: 'skip', value: null });
-                deck.push({ id: id++, color, type: 'reverse', value: null });
-                deck.push({ id: id++, color, type: 'draw2', value: null });
-            }
-            for (let i = 0; i < 2; i++) {
-                deck.push({ id: id++, color, type: 'draw4', value: null });
-                deck.push({ id: id++, color, type: 'discard_all', value: null });
-                deck.push({ id: id++, color, type: 'skip_all', value: null });
-            }
-        }
-    }
-    if (mode === 'classic') {
-        for (let i = 0; i < 4; i++) {
-            deck.push({ id: id++, color: 'wild', type: 'wild', value: null });
-            deck.push({ id: id++, color: 'wild', type: 'wild_draw4', value: null });
-        }
-    } else {
-        for (let i = 0; i < 4; i++) {
-            deck.push({ id: id++, color: 'wild', type: 'wild_rev_draw4', value: null });
-            deck.push({ id: id++, color: 'wild', type: 'wild_draw6', value: null });
-            deck.push({ id: id++, color: 'wild', type: 'wild_draw10', value: null });
-            deck.push({ id: id++, color: 'wild', type: 'wild_roulette', value: null });
-        }
-    }
-    return deck;
-}
 
 /* ─────────────────────────────────────────────────────
    CARD UTILITIES
@@ -137,8 +96,8 @@ function getTooltip(card, mode) {
         case 'draw2':         return mode === 'nomercy' ? 'Draw 2 — Stackable! Counter with +2 or higher' : 'Draw 2 — Next player draws 2 & is skipped';
         case 'draw4':         return 'Draw 4 — Stackable! Next player draws 4';
         case 'wild':          return 'Wild — Choose any colour';
-        case 'wild_draw4':    return 'Wild +4 — Choose colour, next player draws 4';
-        case 'wild_rev_draw4':return 'Wild Reverse +4 — Reverse + next player draws 4 (stackable)';
+        case 'wild_draw4':    return 'Wild +4 — Choose colour; the next player draws 4 or may challenge the play';
+        case 'wild_rev_draw4':return 'Wild Reverse +4 — Reverse direction, then apply a stackable +4';
         case 'wild_draw6':    return 'Wild +6 — Next player draws 6 (stackable)';
         case 'wild_draw10':   return 'Wild +10 — Next player draws 10 (stackable!) 🔥';
         case 'wild_roulette': return 'Colour Roulette — Victim picks a colour, draws until they find it';
@@ -146,27 +105,6 @@ function getTooltip(card, mode) {
         case 'skip_all':      return 'Skip Everyone — All others skip, you play again!';
         default:              return '';
     }
-}
-
-function isDrawCard(card) {
-    return ['draw2', 'draw4', 'wild_draw4', 'wild_rev_draw4', 'wild_draw6', 'wild_draw10'].includes(card.type);
-}
-
-function getDrawAmt(card) {
-    const map = { draw2: 2, draw4: 4, wild_draw4: 4, wild_rev_draw4: 4, wild_draw6: 6, wild_draw10: 10 };
-    return map[card.type] ?? 0;
-}
-
-function canPlayCard(card, top, color, stack, mode) {
-    if (stack > 0 && mode === 'nomercy') {
-        return isDrawCard(card) && getDrawAmt(card) >= getDrawAmt(top);
-    }
-    if (card.color === 'wild') return true;
-    if (card.color === color) return true;
-    if (card.type === top.type) {
-        return card.type === 'number' ? card.value === top.value : true;
-    }
-    return false;
 }
 
 function calcScore(players, winnerIdx) {
@@ -181,93 +119,6 @@ function calcScore(players, winnerIdx) {
         });
     });
     return score;
-}
-
-/* ─────────────────────────────────────────────────────
-   GAME LOGIC HELPERS
-───────────────────────────────────────────────────── */
-
-function ensureDrawPile(g) {
-    if (g.drawPile.length > 0) return g;
-    if (g.discardPile.length <= 1) return g;
-    const top = g.discardPile[g.discardPile.length - 1];
-    return { ...g, drawPile: shuffle(g.discardPile.slice(0, -1)), discardPile: [top] };
-}
-
-function drawCards(g, n) {
-    g = ensureDrawPile(g);
-    const drawn = g.drawPile.slice(0, Math.min(n, g.drawPile.length));
-    return { g: { ...g, drawPile: g.drawPile.slice(drawn.length) }, drawn };
-}
-
-function drawTopCard(g) {
-    const ready = ensureDrawPile(g);
-    if (!ready.drawPile.length) return { g: ready, card: null };
-    return {
-        g: { ...ready, drawPile: ready.drawPile.slice(1) },
-        card: ready.drawPile[0],
-    };
-}
-
-function nextActive(idx, dir, players) {
-    const n = players.length;
-    for (let i = 0; i < n; i++) {
-        idx = ((idx + dir) % n + n) % n;
-        if (!players[idx].isOut) return idx;
-    }
-    return idx;
-}
-
-function countActive(players) {
-    return players.filter(p => !p.isOut).length;
-}
-
-function applyMercyKnockouts(g) {
-    const msgs = [];
-    const players = g.players.map(p => {
-        if (!p.isOut && p.hand.length >= MERCY_LIMIT) {
-            msgs.push(`${p.name} has ${p.hand.length} cards — KNOCKED OUT! 💀`);
-            return { ...p, isOut: true, hand: [] };
-        }
-        return p;
-    });
-    return { g: { ...g, players }, msgs };
-}
-
-function initGame(mode) {
-    let deck = shuffle(createDeck(mode));
-    const players = PLAYER_NAMES.map((name, i) => ({
-        id: i, name,
-        hand: deck.slice(i * CARDS_PER_PLAYER, (i + 1) * CARDS_PER_PLAYER),
-        isHuman: i === 0,
-        isOut: false,
-    }));
-    deck = deck.slice(CARDS_PER_PLAYER * 4);
-    let fi = deck.findIndex(c => c.type === 'number');
-    if (fi === -1) fi = 0;
-    const first = deck[fi];
-    deck = [...deck.slice(0, fi), ...deck.slice(fi + 1)];
-    return {
-        players,
-        drawPile: deck,
-        discardPile: [first],
-        currentColor: first.color === 'wild' ? COLORS[Math.floor(Math.random() * 4)] : first.color,
-        currentPlayerIdx: 0,
-        direction: 1,
-        drawStack: 0,
-        mode,
-        winner: null,
-        hasDrawn: false,
-    };
-}
-
-function deepCopy(g) {
-    return {
-        ...g,
-        players: g.players.map(p => ({ ...p, hand: [...p.hand] })),
-        drawPile: [...g.drawPile],
-        discardPile: [...g.discardPile],
-    };
 }
 
 /* ─────────────────────────────────────────────────────
@@ -340,7 +191,7 @@ function GameCard({ card, playable = false, faceDown = false, onClick, size = 'm
                 <div className="absolute inset-0 opacity-[0.06]"
                     style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 0px, #fff 1px, transparent 1px, transparent 8px)' }} />
                 <div className="absolute inset-[16%] rounded border border-white/20 flex items-center justify-center">
-                    <span className="text-white/20 font-black tracking-wider" style={{ fontSize: '0.36rem' }}>UNO</span>
+                    <span className="text-white/20 font-black tracking-wider" style={{ fontSize: '0.3rem' }}>BLITZ</span>
                 </div>
             </motion.div>
         );
@@ -685,7 +536,7 @@ function WildCallButton({ onCall }) {
                 <button
                     onClick={onCall}
                     className="absolute inset-2.5 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex flex-col items-center justify-center shadow-xl shadow-yellow-500/60 hover:shadow-yellow-400/80 active:scale-95 transition-all"
-                    style={{ animation: 'uno-pulse 0.7s ease-in-out infinite' }}
+                    style={{ animation: 'blitz-pulse 0.7s ease-in-out infinite' }}
                 >
                     <span className="text-black font-black text-base leading-none">⚡</span>
                     <span className="text-black font-black text-[11px] leading-none mt-0.5">WILD!</span>
@@ -693,7 +544,7 @@ function WildCallButton({ onCall }) {
             </div>
             <p className="text-yellow-300 text-xs font-semibold animate-pulse">Call before time's up!</p>
             <style>{`
-              @keyframes uno-pulse {
+              @keyframes blitz-pulse {
                 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234,179,8,0.5); }
                 50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(234,179,8,0); }
               }
@@ -811,7 +662,7 @@ function AiPanel({ player, isCurrentTurn, showThinking }) {
 export default function CardBlitz() {
     const reducedMotion = useReducedMotion();
     const [phase, setPhase] = useState('menu');
-    // phases: menu | playing | drawing | wild_reveal | color_pick | swap_pick | roulette_pick | game_over
+    // phases: menu | playing | drawing | wild_reveal | color_pick | swap_pick | roulette_pick | challenge_pick | game_over
     const [game, setGame]         = useState(null);
     const [messages, setMessages] = useState([]);
     const [aiThinking, setAiThinking]       = useState(false);
@@ -828,6 +679,7 @@ export default function CardBlitz() {
     const pendingPlayerRef = useRef(null);
     const aiTimeoutRef     = useRef(null);
     const wildTimeoutRef   = useRef(null);
+    const wildActiveRef    = useRef(false);
     const msgTimeoutRef    = useRef(null);
     const sequenceTokenRef = useRef(0);
     const drawPileRef      = useRef(null);
@@ -845,6 +697,10 @@ export default function CardBlitz() {
             clearTimeout(wildTimeoutRef.current);
         };
     }, []);
+
+    useEffect(() => {
+        wildActiveRef.current = wildActive;
+    }, [wildActive]);
 
     /* ── Message helper ──────────────────────── */
     const showMsg = useCallback((msg, duration = 3000) => {
@@ -905,7 +761,7 @@ export default function CardBlitz() {
 
     /* ── Game over detection ─────────────────── */
     useEffect(() => {
-        if (!game || ['menu', 'game_over', 'drawing', 'wild_reveal', 'color_pick', 'swap_pick', 'roulette_pick'].includes(phase)) return;
+        if (!game || game.pendingChallenge || ['menu', 'game_over', 'drawing', 'wild_reveal', 'color_pick', 'swap_pick', 'roulette_pick', 'challenge_pick'].includes(phase)) return;
         const empty = game.players.find(p => !p.isOut && p.hand.length === 0);
         if (empty) {
             const s = calcScore(game.players, empty.id);
@@ -926,20 +782,27 @@ export default function CardBlitz() {
         }
     }, [game, phase]);
 
+    /* ── Draw-four challenge prompt for the human victim ─ */
+    useEffect(() => {
+        if (!game?.pendingChallenge || phase !== 'playing') return;
+        const victim = game.players[game.pendingChallenge.victimIdx];
+        if (victim?.isHuman) setPhase('challenge_pick');
+    }, [game, phase]);
+
     /* ── AI turn driver ──────────────────────── */
     useEffect(() => {
-        if (!game || phase !== 'playing') return;
+        if (!game || phase !== 'playing' || wildActive || game.pendingChallenge?.victimIdx === 0) return;
         const cur = game.players[game.currentPlayerIdx];
         if (!cur || cur.isHuman || cur.isOut) return;
         setAiThinking(true);
         const delay = 750 + Math.random() * 650;
         aiTimeoutRef.current = setTimeout(() => {
-            executeAiTurn();
+            if (!wildActiveRef.current) executeAiTurn();
             setAiThinking(false);
         }, delay);
         return () => clearTimeout(aiTimeoutRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [game?.currentPlayerIdx, phase, turnKey]);
+    }, [game?.currentPlayerIdx, game?.pendingChallenge, phase, turnKey, wildActive]);
 
     /* ── Roulette auto-trigger for human victim ─ */
     useEffect(() => {
@@ -968,6 +831,7 @@ export default function CardBlitz() {
     }
 
     function checkWildCallAi(g, aiIdx) {
+        if (g.players[aiIdx].isHuman) return g;
         if (g.players[aiIdx].hand.length === 1) {
             if (Math.random() < 0.80) {
                 setTimeout(() => showMsg(`${g.players[aiIdx].name} calls WILD! ⚡`), 400);
@@ -981,17 +845,33 @@ export default function CardBlitz() {
         return g;
     }
 
-    function applyCardEffects(g, card, playerIdx, msgFn) {
+    function finishWildDrawFourChallenge(g, challenge, msgFn) {
+        const pending = g.pendingChallenge;
+        const offenderName = g.players[pending.offenderIdx].name;
+        const victimName = g.players[pending.victimIdx].name;
+        const result = resolveWildDrawFour(g, challenge);
+
+        if (result.outcome === 'challenge_succeeded') {
+            msgFn(`${victimName} challenges successfully — ${offenderName} draws ${result.drawn}!`);
+        } else if (result.outcome === 'challenge_failed') {
+            msgFn(`${victimName}'s challenge fails — draw ${result.drawn}!`);
+        } else {
+            msgFn(`${victimName} accepts the penalty and draws ${result.drawn}.`);
+        }
+        return result.g;
+    }
+
+    function applyCardEffects(g, card, playerIdx, msgFn, context = {}) {
         const player = g.players[playerIdx];
         const active = countActive(g.players);
 
         if (card.type === 'discard_all') {
-            const extra = g.players[playerIdx].hand.filter(c => c.color === card.color);
-            g.players[playerIdx].hand = g.players[playerIdx].hand.filter(c => c.color !== card.color);
-            g.discardPile = [...g.discardPile, ...extra];
-            msgFn(`${player.name} discards ${extra.length + 1} ${card.color} cards! ✕`);
+            const result = discardAllMatching(g, playerIdx, card);
+            g = result.g;
+            msgFn(`${player.name} discards ${result.discarded} ${card.color} cards! ✕`);
             g.currentPlayerIdx = nextActive(playerIdx, g.direction, g.players);
             g = checkWildCallAi(g, playerIdx);
+            g = checkAndApplyMercy(g);
             return g;
         }
 
@@ -1049,12 +929,13 @@ export default function CardBlitz() {
             case 'wild_draw4':
                 if (g.mode === 'classic') {
                     const victimIdx = nextActive(playerIdx, g.direction, g.players);
-                    const res = drawCards(g, 4);
-                    g = res.g;
-                    g.players[victimIdx].hand = [...g.players[victimIdx].hand, ...res.drawn];
-                    msgFn(`${g.players[victimIdx].name} draws 4! 🃏🃏🃏🃏`);
-                    g.currentPlayerIdx = nextActive(victimIdx, g.direction, g.players);
-                    g = checkAndApplyMercy(g);
+                    g.pendingChallenge = {
+                        offenderIdx: playerIdx,
+                        victimIdx,
+                        wasLegal: context.wildDraw4Legal !== false,
+                    };
+                    g.currentPlayerIdx = victimIdx;
+                    msgFn(`${player.name} plays Wild +4 — ${g.players[victimIdx].name} may challenge.`);
                 }
                 break;
 
@@ -1063,7 +944,7 @@ export default function CardBlitz() {
                 if (g.mode === 'nomercy') {
                     g.drawStack += 4;
                     msgFn(`${player.name} plays Wild Reverse +4! Direction reversed, stack: +${g.drawStack} 🔥`);
-                    g.currentPlayerIdx = nextActive(playerIdx, g.direction, g.players);
+                    g.currentPlayerIdx = getReverseDrawFourVictim(playerIdx, g.direction, g.players);
                 }
                 break;
 
@@ -1089,18 +970,17 @@ export default function CardBlitz() {
                 if (!victim.isHuman) {
                     const chosenColor = COLORS[Math.floor(Math.random() * 4)];
                     g.currentColor = chosenColor;
-                    let revealed = [];
-                    for (let i = 0; i < 50; i++) {
-                        g = ensureDrawPile(g);
-                        if (!g.drawPile.length) break;
-                        const c = g.drawPile[0];
-                        g.drawPile = g.drawPile.slice(1);
-                        revealed.push(c);
-                        if (c.color === chosenColor) break;
+                    const revealed = [];
+                    while (!g.players[victimIdx].isOut) {
+                        const pull = drawTopCard(g);
+                        g = pull.g;
+                        if (!pull.card) break;
+                        revealed.push(pull.card);
+                        g.players[victimIdx].hand = [...g.players[victimIdx].hand, pull.card];
+                        g = checkAndApplyMercy(g);
+                        if (pull.card.color === chosenColor) break;
                     }
-                    g.players[victimIdx].hand = [...g.players[victimIdx].hand, ...revealed];
                     msgFn(`${victim.name} picks ${chosenColor.toUpperCase()}, draws ${revealed.length} card${revealed.length !== 1 ? 's' : ''}! 🎲`);
-                    g = checkAndApplyMercy(g);
                     g.currentPlayerIdx = nextActive(victimIdx, g.direction, g.players);
                 } else {
                     msgFn(`${player.name} plays Colour Roulette on you! Pick a colour! 🎲`);
@@ -1161,13 +1041,25 @@ export default function CardBlitz() {
     function aiDrawUntilPlayable(g, aiIdx) {
         let drawn = [];
         let found = null;
-        for (let i = 0; i < 50; i++) {
+        while (!g.players[aiIdx].isOut) {
             g = ensureDrawPile(g);
             if (!g.drawPile.length) break;
             const c = g.drawPile[0];
             g.drawPile = g.drawPile.slice(1);
             const top = g.discardPile[g.discardPile.length - 1];
-            if (canPlayCard(c, top, g.currentColor, 0, g.mode)) { found = c; break; }
+            if (canPlayCard(c, top, g.currentColor, 0, g.mode)) {
+                g.players[aiIdx].hand = [...g.players[aiIdx].hand, c];
+                if (g.players[aiIdx].hand.length >= MERCY_LIMIT) {
+                    g = checkAndApplyMercy(g);
+                    if (g.players[aiIdx].isOut) {
+                        g.currentPlayerIdx = nextActive(aiIdx, g.direction, g.players);
+                        return g;
+                    }
+                }
+                g.players[aiIdx].hand = g.players[aiIdx].hand.filter(card => card.id !== c.id);
+                found = c;
+                break;
+            }
             drawn.push(c);
             g.players[aiIdx].hand = [...g.players[aiIdx].hand, c];
             if (g.players[aiIdx].hand.length >= MERCY_LIMIT) {
@@ -1181,9 +1073,9 @@ export default function CardBlitz() {
         if (found) {
             g.discardPile = [...g.discardPile, found];
             if (found.color === 'wild') {
-                g.currentColor = found.type === 'wild_roulette'
-                    ? COLORS[Math.floor(Math.random() * 4)]
-                    : aiPickColor(g.players[aiIdx].hand);
+                if (found.type !== 'wild_roulette') {
+                    g.currentColor = aiPickColor(g.players[aiIdx].hand);
+                }
             } else {
                 g.currentColor = found.color;
             }
@@ -1210,6 +1102,11 @@ export default function CardBlitz() {
             const ai = g.players[aiIdx];
             if (ai.isOut || ai.isHuman) return prev;
 
+            if (g.pendingChallenge?.victimIdx === aiIdx) {
+                const challenge = Math.random() < 0.35;
+                return finishWildDrawFourChallenge(g, challenge, showMsg);
+            }
+
             const top = g.discardPile[g.discardPile.length - 1];
 
             // Handle draw stack (No Mercy stacking)
@@ -1225,16 +1122,23 @@ export default function CardBlitz() {
                     showMsg(`${ai.name} stacks ${getSymbol(card)}! Stack: +${g.drawStack} 😱`);
                     g = checkAndApplyMercy(g);
                     g = checkWildCallAi(g, aiIdx);
-                    g.currentPlayerIdx = nextActive(aiIdx, g.direction, g.players);
+                    g.currentPlayerIdx = card.type === 'wild_rev_draw4'
+                        ? getReverseDrawFourVictim(aiIdx, g.direction, g.players)
+                        : nextActive(aiIdx, g.direction, g.players);
                     return g;
                 } else {
                     const count = g.drawStack;
-                    const res = drawCards(g, count);
-                    g = res.g;
-                    g.players[aiIdx].hand = [...g.players[aiIdx].hand, ...res.drawn];
+                    let drawnCount = 0;
+                    while (drawnCount < count && !g.players[aiIdx].isOut) {
+                        const pull = drawTopCard(g);
+                        g = pull.g;
+                        if (!pull.card) break;
+                        g.players[aiIdx].hand = [...g.players[aiIdx].hand, pull.card];
+                        drawnCount += 1;
+                        g = checkAndApplyMercy(g);
+                    }
                     g.drawStack = 0;
-                    showMsg(`${ai.name} draws ${res.drawn.length} cards! 💀`);
-                    g = checkAndApplyMercy(g);
+                    showMsg(`${ai.name} draws ${drawnCount} cards! 💀`);
                     g.currentPlayerIdx = nextActive(aiIdx, g.direction, g.players);
                     return g;
                 }
@@ -1244,16 +1148,20 @@ export default function CardBlitz() {
             const choice = aiPickCard(ai.hand, top, g.currentColor, 0, g.mode);
             if (choice) {
                 const card = choice.card;
+                const previousColor = g.currentColor;
+                const wildDraw4Legal = card.type === 'wild_draw4'
+                    ? isWildDrawFourLegal(ai.hand, card.id, previousColor)
+                    : true;
                 g.players[aiIdx].hand = ai.hand.filter((_, i) => i !== choice.index);
                 g.discardPile = [...g.discardPile, card];
                 if (card.color === 'wild') {
-                    g.currentColor = card.type === 'wild_roulette'
-                        ? COLORS[Math.floor(Math.random() * 4)]
-                        : aiPickColor(g.players[aiIdx].hand);
+                    if (card.type !== 'wild_roulette') {
+                        g.currentColor = aiPickColor(g.players[aiIdx].hand);
+                    }
                 } else {
                     g.currentColor = card.color;
                 }
-                g = applyCardEffects(g, card, aiIdx, showMsg);
+                g = applyCardEffects(g, card, aiIdx, showMsg, { wildDraw4Legal });
             } else {
                 if (g.mode === 'nomercy') {
                     g = aiDrawUntilPlayable(g, aiIdx);
@@ -1264,9 +1172,13 @@ export default function CardBlitz() {
                         const drawn = res.drawn[0];
                         const newTop = g.discardPile[g.discardPile.length - 1];
                         if (canPlayCard(drawn, newTop, g.currentColor, 0, g.mode) && Math.random() < 0.7) {
+                            const previousColor = g.currentColor;
+                            const wildDraw4Legal = drawn.type === 'wild_draw4'
+                                ? isWildDrawFourLegal(g.players[aiIdx].hand, drawn.id, previousColor)
+                                : true;
                             g.discardPile = [...g.discardPile, drawn];
                             g.currentColor = drawn.color === 'wild' ? aiPickColor(g.players[aiIdx].hand) : drawn.color;
-                            g = applyCardEffects(g, drawn, aiIdx, showMsg);
+                            g = applyCardEffects(g, drawn, aiIdx, showMsg, { wildDraw4Legal });
                             showMsg(`${ai.name} draws and plays ${getSymbol(drawn)}!`);
                             return g;
                         }
@@ -1286,12 +1198,13 @@ export default function CardBlitz() {
         sequenceTokenRef.current += 1;
         gameAudio.init();
         gameAudio.resume();
-        const g = initGame(mode);
+        const g = initGame(mode, PLAYER_NAMES);
         setGame(g);
-        setPhase('playing');
+        setPhase(g.needsInitialColor ? 'color_pick' : 'playing');
         setScore(0);
         setMessages([]);
         setWildActive(false);
+        wildActiveRef.current = false;
         setDrawFlight(null);
         setWildReveal(null);
         setTurnKey(0);
@@ -1314,6 +1227,7 @@ export default function CardBlitz() {
         setMessages([]);
         setAiThinking(false);
         setWildActive(false);
+        wildActiveRef.current = false;
         setDrawFlight(null);
         setWildReveal(null);
         setScore(0);
@@ -1323,8 +1237,10 @@ export default function CardBlitz() {
 
     /* ── WILD! Call ──────────────────────────── */
     function triggerWildCheck() {
+        wildActiveRef.current = true;
         setWildActive(true);
         wildTimeoutRef.current = setTimeout(() => {
+            wildActiveRef.current = false;
             setWildActive(false);
             showMsg('Forgot to call WILD! +2 penalty! ⚡');
             gameAudio.play('wrong');
@@ -1334,7 +1250,7 @@ export default function CardBlitz() {
                 const res = drawCards(g, 2);
                 g = res.g;
                 g.players[0].hand = [...g.players[0].hand, ...res.drawn];
-                return g;
+                return checkAndApplyMercy(g);
             });
         }, WILD_CALL_MS);
     }
@@ -1342,6 +1258,7 @@ export default function CardBlitz() {
     function callWild() {
         if (!wildActive) return;
         clearTimeout(wildTimeoutRef.current);
+        wildActiveRef.current = false;
         setWildActive(false);
         showMsg('WILD! ⚡', 1500);
         gameAudio.play('score');
@@ -1352,13 +1269,21 @@ export default function CardBlitz() {
         if (!game || game.currentPlayerIdx !== 0 || phase !== 'playing' || aiThinking || wildActive) return;
         const card = game.players[0].hand[cardIndex];
         const top  = game.discardPile[game.discardPile.length - 1];
+        if (game.mode === 'classic' && game.hasDrawn && card.id !== game.drawnCardId) {
+            showMsg('After drawing, only the new card may be played.', 1800);
+            gameAudio.play('wrong');
+            return;
+        }
         if (!canPlayCard(card, top, game.currentColor, game.drawStack, game.mode)) {
             showMsg("Can't play that card!", 1500);
             gameAudio.play('wrong');
             return;
         }
         gameAudio.play('click');
-        pendingCardRef.current = { card, cardIndex };
+        const wildDraw4Legal = card.type === 'wild_draw4'
+            ? isWildDrawFourLegal(game.players[0].hand, card.id, game.currentColor)
+            : true;
+        pendingCardRef.current = { card, cardIndex, wildDraw4Legal };
 
         if (card.color === 'wild') {
             const token = ++sequenceTokenRef.current;
@@ -1368,10 +1293,30 @@ export default function CardBlitz() {
                 g.players[0].hand = g.players[0].hand.filter((_, i) => i !== cardIndex);
                 g.discardPile = [...g.discardPile, card];
                 g.hasDrawn = false;
+                g.drawnCardId = null;
                 return g;
             });
             const completed = await celebrateWild(card, 'played', token, game.mode);
             if (!completed) return;
+
+            if (card.type === 'wild_roulette') {
+                pendingCardRef.current = null;
+                setGame(prev => {
+                    if (!prev) return prev;
+                    return applyCardEffects(deepCopy(prev), card, 0, showMsg);
+                });
+                setPhase('playing');
+                setTimeout(() => {
+                    setGame(prev => {
+                        if (!prev) return prev;
+                        if (prev.players[0].hand.length === 1) triggerWildCheck();
+                        return prev;
+                    });
+                }, 120);
+                advanceTurn();
+                return;
+            }
+
             setPhase('color_pick');
             return;
         }
@@ -1386,6 +1331,7 @@ export default function CardBlitz() {
             g.discardPile = [...g.discardPile, card];
             g.currentColor = card.color;
             g.hasDrawn = false;
+            g.drawnCardId = null;
             g = applyCardEffects(g, card, 0, showMsg);
             if (g._needSwapPick) {
                 delete g._needSwapPick;
@@ -1395,26 +1341,29 @@ export default function CardBlitz() {
             }
             return g;
         });
-        setTimeout(() => {
-            setGame(prev => {
-                if (!prev) return prev;
-                if (prev.players[0].hand.length === 1) triggerWildCheck();
-                return prev;
-            });
-        }, 120);
+        if (!(game.mode === 'nomercy' && card.type === 'number' && card.value === 7)) {
+            setTimeout(() => {
+                setGame(prev => {
+                    if (!prev) return prev;
+                    if (prev.players[0].hand.length === 1) triggerWildCheck();
+                    return prev;
+                });
+            }, 120);
+        }
         advanceTurn();
     }
 
     function chooseColor(color) {
-        const { card } = pendingCardRef.current || {};
+        const { card, wildDraw4Legal } = pendingCardRef.current || {};
         setPhase('playing');
         pendingCardRef.current = null;
         setGame(prev => {
             if (!prev) return prev;
             let g = deepCopy(prev);
             g.currentColor = color;
+            g.needsInitialColor = false;
             if (card) {
-                g = applyCardEffects(g, card, 0, showMsg);
+                g = applyCardEffects(g, card, 0, showMsg, { wildDraw4Legal });
                 if (g._rouletteVictim) delete g._rouletteVictim;
                 if (g._needSwapPick) {
                     delete g._needSwapPick;
@@ -1447,6 +1396,13 @@ export default function CardBlitz() {
             showMsg(`Swapped hands with ${g.players[targetIdx].name}! 🔄`);
             return g;
         });
+        setTimeout(() => {
+            setGame(prev => {
+                if (!prev) return prev;
+                if (prev.players[0].hand.length === 1) triggerWildCheck();
+                return prev;
+            });
+        }, 120);
         advanceTurn();
     }
 
@@ -1459,7 +1415,9 @@ export default function CardBlitz() {
         g.currentColor = color;
         const revealed = [];
 
-        for (let i = 0; i < 50; i++) {
+        let pullNumber = 0;
+        while (!g.players[0].isOut) {
+            pullNumber += 1;
             const pull = drawTopCard(g);
             g = pull.g;
             if (!pull.card) break;
@@ -1468,7 +1426,7 @@ export default function CardBlitz() {
             const completed = await animateDraw(
                 pull.card,
                 'hand',
-                `Roulette pull ${i + 1}`,
+                `Roulette pull ${pullNumber}`,
                 token,
                 g.mode
             );
@@ -1476,16 +1434,17 @@ export default function CardBlitz() {
 
             revealed.push(pull.card);
             g.players[0].hand = [...g.players[0].hand, pull.card];
+            g = checkAndApplyMercy(g);
             setGame(deepCopy(g));
 
             const celebrated = await celebrateWild(pull.card, 'drawn', token, g.mode);
             if (!celebrated) return;
+            if (g.players[0].isOut) break;
             if (pull.card.color === color) break;
         }
 
         if (sequenceTokenRef.current !== token) return;
         showMsg(`Roulette: picked ${color.toUpperCase()}, drew ${revealed.length} card${revealed.length !== 1 ? 's' : ''}! 🎲`);
-        g = checkAndApplyMercy(g);
         g.currentPlayerIdx = nextActive(0, g.direction, g.players);
         setGame(deepCopy(g));
         setPhase('playing');
@@ -1522,16 +1481,17 @@ export default function CardBlitz() {
 
                 g.players[0].hand = [...g.players[0].hand, pull.card];
                 drawnCount += 1;
+                g = checkAndApplyMercy(g);
                 setGame(deepCopy(g));
 
                 const celebrated = await celebrateWild(pull.card, 'drawn', token, g.mode);
                 if (!celebrated) return;
+                if (g.players[0].isOut) break;
             }
 
             if (sequenceTokenRef.current !== token) return;
             g.drawStack = 0;
             showMsg(`Drew ${drawnCount} cards from the stack! 😰`);
-            g = checkAndApplyMercy(g);
             g.currentPlayerIdx = nextActive(0, g.direction, g.players);
             setGame(deepCopy(g));
             setPhase('playing');
@@ -1543,25 +1503,42 @@ export default function CardBlitz() {
             let g = deepCopy(game);
             let drawnCount = 0;
 
-            for (let i = 0; i < 50; i++) {
+            let searchCount = 0;
+            while (!g.players[0].isOut) {
+                searchCount += 1;
                 const pull = drawTopCard(g);
                 g = pull.g;
                 if (!pull.card) break;
 
                 const top = g.discardPile[g.discardPile.length - 1];
                 const playable = canPlayCard(pull.card, top, g.currentColor, 0, g.mode);
+                const wouldHitMercy = g.players[0].hand.length + 1 >= MERCY_LIMIT;
                 setGame(deepCopy(g));
 
                 const completed = await animateDraw(
                     pull.card,
-                    playable ? 'discard' : 'hand',
-                    playable ? 'Playable card!' : `Searching • ${i + 1}`,
+                    playable && !wouldHitMercy ? 'discard' : 'hand',
+                    playable
+                        ? wouldHitMercy ? 'Mercy limit!' : 'Playable card!'
+                        : `Searching • ${searchCount}`,
                     token,
                     g.mode
                 );
                 if (!completed) return;
 
                 if (playable) {
+                    g.players[0].hand = [...g.players[0].hand, pull.card];
+                    if (g.players[0].hand.length >= MERCY_LIMIT) {
+                        g = checkAndApplyMercy(g);
+                        if (g.players[0].isOut) {
+                            g.currentPlayerIdx = nextActive(0, g.direction, g.players);
+                            setGame(deepCopy(g));
+                            setPhase('playing');
+                            advanceTurn();
+                            return;
+                        }
+                    }
+                    g.players[0].hand = g.players[0].hand.filter(card => card.id !== pull.card.id);
                     g.discardPile = [...g.discardPile, pull.card];
                     g.hasDrawn = false;
                     setGame(deepCopy(g));
@@ -1575,6 +1552,19 @@ export default function CardBlitz() {
                         pendingCardRef.current = { card: pull.card, cardIndex: -1 };
                         const celebrated = await celebrateWild(pull.card, 'drawn', token, g.mode);
                         if (!celebrated) return;
+
+                        if (pull.card.type === 'wild_roulette') {
+                            pendingCardRef.current = null;
+                            g = applyCardEffects(g, pull.card, 0, showMsg);
+                            setGame(deepCopy(g));
+                            setPhase('playing');
+                            setTimeout(() => {
+                                if (g.players[0].hand.length === 1) triggerWildCheck();
+                            }, 120);
+                            advanceTurn();
+                            return;
+                        }
+
                         setPhase('color_pick');
                         return;
                     }
@@ -1589,6 +1579,11 @@ export default function CardBlitz() {
                     }
                     setGame(deepCopy(g));
                     setPhase(nextPhase);
+                    if (nextPhase === 'playing') {
+                        setTimeout(() => {
+                            if (g.players[0].hand.length === 1) triggerWildCheck();
+                        }, 120);
+                    }
                     advanceTurn();
                     return;
                 }
@@ -1635,6 +1630,7 @@ export default function CardBlitz() {
 
         g.players[0].hand = [...g.players[0].hand, pull.card];
         g.hasDrawn = true;
+        g.drawnCardId = pull.card.id;
         setGame(deepCopy(g));
         showMsg('Drew a card');
 
@@ -1648,10 +1644,22 @@ export default function CardBlitz() {
         setGame(prev => {
             const g = deepCopy(prev);
             g.hasDrawn = false;
+            g.drawnCardId = null;
             g.currentPlayerIdx = nextActive(0, g.direction, g.players);
             return g;
         });
         showMsg('Turn passed');
+        advanceTurn();
+    }
+
+    function handleWildDrawFourDecision(challenge) {
+        if (!game?.pendingChallenge || game.pendingChallenge.victimIdx !== 0) return;
+        gameAudio.play('click');
+        setGame(prev => {
+            if (!prev?.pendingChallenge) return prev;
+            return finishWildDrawFourChallenge(deepCopy(prev), challenge, showMsg);
+        });
+        setPhase('playing');
         advanceTurn();
     }
 
@@ -1664,14 +1672,18 @@ export default function CardBlitz() {
         const top = game.discardPile[game.discardPile.length - 1];
         const s = new Set();
         game.players[0].hand.forEach((card, i) => {
-            if (canPlayCard(card, top, game.currentColor, game.drawStack, game.mode)) s.add(i);
+            const isOnlyDrawnCard = game.mode !== 'classic'
+                || !game.hasDrawn
+                || card.id === game.drawnCardId;
+            if (isOnlyDrawnCard && canPlayCard(card, top, game.currentColor, game.drawStack, game.mode)) s.add(i);
         });
         return s;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [game?.players?.[0]?.hand, game?.currentColor, game?.drawStack, isPlayerTurn, wildActive]);
+    }, [game?.players?.[0]?.hand, game?.currentColor, game?.drawStack, game?.hasDrawn, game?.drawnCardId, isPlayerTurn, wildActive]);
 
-    const canDraw = isPlayerTurn && !wildActive && !(game?.hasDrawn && game?.mode === 'classic' && playableIndices.size > 0);
-    const mustDrawStack = isPlayerTurn && (game?.drawStack ?? 0) > 0 && game?.mode === 'nomercy';
+    const mustDrawStack = isPlayerTurn && !wildActive && (game?.drawStack ?? 0) > 0 && game?.mode === 'nomercy';
+    const canDraw = isPlayerTurn && !wildActive
+        && canDrawNormally(game?.mode, game?.hasDrawn, playableIndices.size);
     const colorStyle = topCard?.color && topCard.color !== 'wild' ? CS[game?.currentColor] : CS[game?.currentColor];
 
     /* ═══════════════════════════════════════════
@@ -1694,7 +1706,7 @@ export default function CardBlitz() {
                                 Wild Cards ⚡
                             </span>
                         </motion.h1>
-                        <p className="text-gray-500 mt-1 text-sm">UNO-style card game — 1 vs 3 AI opponents</p>
+                        <p className="text-gray-500 mt-1 text-sm">Colour-matching card game — 1 vs 3 AI opponents</p>
                     </div>
                 </div>
 
@@ -1711,7 +1723,7 @@ export default function CardBlitz() {
                             <span className="text-2xl">🃏</span>
                         </div>
                         <h3 className="text-xl font-bold text-white mb-2">Classic</h3>
-                        <p className="text-gray-400 text-sm mb-4">Standard UNO rules. Match colour or number, use action cards to disrupt opponents.</p>
+                        <p className="text-gray-400 text-sm mb-4">Classic matching-card rules. Match colour or number, then use action cards to disrupt opponents.</p>
                         <div className="flex flex-wrap gap-1.5">
                             {['Skip', 'Reverse', '+2', 'Wild', 'Wild +4'].map(t => (
                                 <span key={t} className="px-2 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded-full">{t}</span>
@@ -1756,6 +1768,7 @@ export default function CardBlitz() {
                             <li>• <span className="text-white">Wild</span> cards let you choose any colour</li>
                             <li>• <span className="text-white">Skip</span> skips the next player; <span className="text-white">Reverse</span> flips direction</li>
                             <li>• Draw cards force the next player to pick up cards</li>
+                            <li>• A classic Wild +4 may be challenged if it was played while a matching colour or another Wild was held</li>
                             <li>• Call <span className="text-yellow-400 font-bold">WILD!</span> when you're down to 1 card, or take +2 penalty</li>
                             <li>• First to empty their hand wins!</li>
                         </ul>
@@ -1945,7 +1958,7 @@ export default function CardBlitz() {
                             {mustDrawStack
                                 ? `Stack a draw card (≥+${getDrawAmt(topCard)}) or draw ${game.drawStack}!`
                                 : game?.hasDrawn
-                                    ? 'Play a card or pass your turn'
+                                    ? playableIndices.size > 0 ? 'Play the card you drew or pass your turn' : 'The card you drew cannot be played — pass your turn'
                                     : game?.mode === 'nomercy'
                                         ? playableIndices.size > 0 ? 'Your turn — play a card' : 'No playable card — draw until you find one!'
                                         : 'Your turn — play a card or draw one'}
@@ -2108,6 +2121,46 @@ export default function CardBlitz() {
                         title="🎲 Colour Roulette!"
                         subtitle="Pick a colour — you'll draw until you find it!"
                     />
+                )}
+            </AnimatePresence>
+
+            {/* Draw-four challenge decision */}
+            <AnimatePresence>
+                {phase === 'challenge_pick' && game?.pendingChallenge && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center"
+                        style={{ background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(12px)' }}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.82, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.82, opacity: 0, y: 20 }}
+                            className="glass-panel rounded-2xl p-6 sm:p-8 max-w-sm w-full mx-4 text-center"
+                        >
+                            <h3 className="text-white text-2xl font-black mb-2">Wild +4 played!</h3>
+                            <p className="text-gray-400 text-sm mb-6">
+                                Accept four cards, or challenge whether the previous player had a matching colour.
+                                A failed challenge means drawing six.
+                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => handleWildDrawFourDecision(false)}
+                                    className="rounded-xl bg-white/10 px-4 py-3 text-sm font-bold text-gray-200 hover:bg-white/20 transition-colors"
+                                >
+                                    Draw 4
+                                </button>
+                                <button
+                                    onClick={() => handleWildDrawFourDecision(true)}
+                                    className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 text-sm font-black text-black hover:brightness-110 transition"
+                                >
+                                    Challenge
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
