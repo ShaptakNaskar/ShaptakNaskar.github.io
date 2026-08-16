@@ -15,6 +15,7 @@ import Breakout from './components/games/Breakout';
 import CosmicLander from './components/games/CosmicLander';
 import SpaceDefender from './components/games/SpaceDefender';
 import CardBlitz from './components/games/CardBlitz';
+import PacketRush from './components/games/PacketRush';
 import CyberpunkWeather from './components/webapps/CyberpunkWeather';
 import Hanamimi from './components/webapps/Hanamimi';
 import HanamimiLeaderboard from './components/HanamimiLeaderboard';
@@ -300,6 +301,19 @@ function App() {
                       transition={{ duration: 0.3 }}
                     >
                       <CardBlitz />
+                    </motion.div>
+                  }
+                />
+                <Route
+                  path="/games/packet-rush"
+                  element={
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <PacketRush />
                     </motion.div>
                   }
                 />

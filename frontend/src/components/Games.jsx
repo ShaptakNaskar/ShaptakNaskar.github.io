@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Volume2, VolumeX, Trophy, Disc, FileQuestion, Grid3X3, Layers, Rocket, Crosshair, Zap } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX, Trophy, Disc, FileQuestion, Grid3X3, Layers, Rocket, Crosshair, Zap, Gauge } from 'lucide-react';
 import gameAudio from '../utils/audio';
 import LeaderboardModal from './LeaderboardModal';
 
@@ -61,6 +61,14 @@ const games = [
         gradient: 'from-rose-500 to-amber-500',
         Icon: Zap,
         path: '/games/wild-cards'
+    },
+    {
+        id: 'packet-rush',
+        name: 'Packet Rush',
+        description: 'Route data through an accelerating neon network',
+        gradient: 'from-cyan-400 via-blue-600 to-purple-600',
+        Icon: Gauge,
+        path: '/games/packet-rush'
     }
 ];
 

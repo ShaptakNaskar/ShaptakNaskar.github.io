@@ -92,6 +92,7 @@ function LeaderboardModal({ isOpen, onClose, game, currentScore, onSubmitScore }
         'cosmic-lander': 'Cosmic Lander',
         'space-defender': 'Space Defender',
         'wild-cards': 'Wild Cards',
+        'packet-rush': 'Packet Rush',
     };
 
     return (
