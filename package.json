@@ -4,8 +4,8 @@
   "description": "Shaptak Naskar's portfolio website",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "cd frontend && npm install && npm run build && cd .. && nodemon backend/server.js",
-    "build": "cd frontend && npm install && npm run build"
+    "dev": "npm --prefix frontend run build && nodemon backend/server.js",
+    "build": "env -u npm_config_allow_scripts npm --prefix frontend install && npm --prefix frontend run build"
   },
   "dependencies": {
     "ably": "^2.24.0",
